@@ -1,6 +1,6 @@
 class ApiConfig {
   // Kita bypass paksa biar langsung ngebaca IP Wi-Fi laptop kamu
-  static String get serverIp => 'localhost'; 
+  static String get serverIp => '127.0.0.1'; 
 
   static const String port = '';
   

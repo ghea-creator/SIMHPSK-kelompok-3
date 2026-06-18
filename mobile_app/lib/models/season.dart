@@ -21,8 +21,8 @@ class Season {
     return Season(
       id: json['id'] as int,
       name: json['name'] as String,
-      startDate: json['start_date'] as String? ?? '',
-      endDate: json['end_date'] as String? ?? '',
+      startDate: (json['start_date'] as String? ?? '').split('T')[0],
+      endDate: (json['end_date'] as String? ?? '').split('T')[0],
       status: json['status'] as String? ?? 'active',
       notes: json['notes'] as String?,
       targetKg: double.tryParse(json['target_kg']?.toString() ?? '') ?? 0.0,
