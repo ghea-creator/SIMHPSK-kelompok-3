@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 // intl removed: date input is text-only YYYY-MM-DD
 import '../services/api_service.dart';
 import '../models/sale.dart';
+import '../models/season.dart';
+import '../utils/thousands_formatter.dart';
 
 class AddEditSaleScreen extends StatefulWidget {
   final Sale? sale;
@@ -32,6 +35,10 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
   int? _totalPrice;
   late String _paymentStatus;
 
+  List<Season> _seasons = [];
+  Season? _selectedSeason;
+  bool _isLoadingSeasons = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +57,7 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
       text: widget.sale?.quantity.toString() ?? '',
     );
     _pricePerUnitController = TextEditingController(
-      text: widget.sale?.pricePerUnit.toString() ?? '',
+      text: widget.sale?.pricePerUnit != null ? ThousandsFormatter.format(widget.sale!.pricePerUnit.toString()) : '',
     );
     _notesController = TextEditingController(
       text: widget.sale?.notes ?? '',
@@ -58,24 +65,98 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
     _paymentStatus = widget.sale?.status == 'pending' ? 'unpaid' : 'paid';
 
     _updateTotal();
+    _loadSeasons();
+  }
+
+  Future<void> _loadSeasons() async {
+    setState(() {
+      _isLoadingSeasons = true;
+    });
+
+    try {
+      final seasons = await _apiService.getSeasons();
+      if (mounted) {
+        setState(() {
+          _seasons = seasons;
+          if (widget.sale != null && widget.sale!.seasonId != null) {
+            _selectedSeason = _seasons.firstWhere(
+              (s) => s.id == widget.sale!.seasonId,
+              orElse: () => _seasons.isNotEmpty ? _seasons.first : Season(
+                id: 0,
+                name: 'N/A',
+                startDate: '',
+                endDate: '',
+                status: 'active',
+              ),
+            );
+          } else if (_seasons.isNotEmpty) {
+            _selectedSeason = _seasons.first;
+          }
+          _isLoadingSeasons = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingSeasons = false;
+        });
+      }
+    }
   }
 
   void _updateTotal() {
     final quantity = int.tryParse(_quantityController.text) ?? 0;
-    final price = int.tryParse(_pricePerUnitController.text) ?? 0;
+    final price = int.tryParse(_pricePerUnitController.text.replaceAll('.', '')) ?? 0;
     setState(() {
       _totalPrice = quantity * price;
     });
   }
 
-  // Date picker removed: date input is now free-text YYYY-MM-DD
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime initialDate = DateTime.now();
+    final DateTime firstDate = DateTime(2000);
+    final DateTime lastDate = DateTime(2100);
+
+    final DateTime? currentInputDate = DateTime.tryParse(_dateController.text);
+    if (currentInputDate != null) {
+      initialDate = currentInputDate;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF27AE60),
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final String formatted = "${picked.year.toString().padLeft(4, '0')}-"
+          "${picked.month.toString().padLeft(2, '0')}-"
+          "${picked.day.toString().padLeft(2, '0')}";
+      setState(() {
+        _dateController.text = formatted;
+      });
+    }
+  }
 
   Future<void> _saveSale() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final pricePerUnit = int.tryParse(_pricePerUnitController.text) ?? 0;
+    final pricePerUnit = int.tryParse(_pricePerUnitController.text.replaceAll('.', '')) ?? 0;
     if (pricePerUnit > 0 && pricePerUnit < 1000) {
       final confirm = await showDialog<bool>(
         context: context,
@@ -111,28 +192,32 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
         // Create new
         result = await _apiService.createSale(
           quantity: int.parse(_quantityController.text),
-          pricePerUnit: int.parse(_pricePerUnitController.text),
+          pricePerUnit: int.parse(_pricePerUnitController.text.replaceAll('.', '')),
           saleDate: _dateController.text,
           buyerName: _buyerNameController.text,
           buyerPhone: _buyerPhoneController.text.isEmpty
               ? null
               : _buyerPhoneController.text,
           notes: _notesController.text.isEmpty ? null : _notesController.text,
+          status: 'completed',
           paymentStatus: _paymentStatus,
+          seasonId: _selectedSeason?.id,
         );
       } else {
         // Edit existing
         result = await _apiService.updateSale(
           widget.sale!.id,
           quantity: int.parse(_quantityController.text),
-          pricePerUnit: int.parse(_pricePerUnitController.text),
+          pricePerUnit: int.parse(_pricePerUnitController.text.replaceAll('.', '')),
           saleDate: _dateController.text,
           buyerName: _buyerNameController.text,
           buyerPhone: _buyerPhoneController.text.isEmpty
               ? null
               : _buyerPhoneController.text,
           notes: _notesController.text.isEmpty ? null : _notesController.text,
+          status: 'completed',
           paymentStatus: _paymentStatus,
+          seasonId: _selectedSeason?.id,
         );
       }
 
@@ -231,13 +316,66 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       ),
                       const Divider(height: 32),
 
+                      // Season Dropdown
+                      const Text('Musim Tanam (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 8),
+                      _isLoadingSeasons
+                          ? const Center(child: CircularProgressIndicator())
+                          : DropdownButtonFormField<Season?>(
+                              value: _selectedSeason,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                fillColor: Colors.grey.shade50,
+                                filled: true,
+                              ),
+                              items: [
+                                const DropdownMenuItem<Season?>(
+                                  value: null,
+                                  child: Text('Semua Musim / Tanpa Musim'),
+                                ),
+                                ..._seasons.map((Season season) {
+                                  return DropdownMenuItem<Season?>(
+                                    value: season,
+                                    child: Text(season.name),
+                                  );
+                                }),
+                              ],
+                              onChanged: (Season? newValue) {
+                                setState(() {
+                                  _selectedSeason = newValue;
+                                  
+                                  if (newValue != null && _dateController.text.isNotEmpty) {
+                                    final currentDate = DateTime.tryParse(_dateController.text);
+                                    final seasonStart = DateTime.tryParse(newValue.startDate);
+                                    final seasonEnd = DateTime.tryParse(newValue.endDate);
+                                    
+                                    if (currentDate != null && seasonStart != null && seasonEnd != null) {
+                                      if (currentDate.isBefore(seasonStart) || currentDate.isAfter(seasonEnd)) {
+                                        _dateController.text = '';
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Tanggal direset karena di luar musim tanam terpilih.')),
+                                        );
+                                      }
+                                    }
+                                  }
+                                });
+                              },
+                            ),
+                      const SizedBox(height: 20),
+
                       // Date
                       const Text('Tanggal Penjualan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _dateController,
+                        readOnly: true,
+                        onTap: () => _selectDate(context),
                         decoration: InputDecoration(
-                          hintText: 'YYYY-MM-DD',
+                          hintText: 'Pilih Tanggal Penjualan',
+                          suffixIcon: const Icon(Icons.calendar_today, color: Color(0xFF27AE60)),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -245,12 +383,9 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                           fillColor: Colors.grey.shade50,
                           filled: true,
                         ),
-                        keyboardType: TextInputType.datetime,
                         validator: (value) {
                           if (value?.isEmpty ?? true) return 'Tanggal harus diisi';
-                          final pattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-                          if (!pattern.hasMatch(value!)) return 'Format tanggal harus YYYY-MM-DD';
-                          if (DateTime.tryParse(value) == null) return 'Tanggal tidak valid';
+                          if (DateTime.tryParse(value!) == null) return 'Tanggal tidak valid';
                           return null;
                         },
                       ),
@@ -321,8 +456,9 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       TextFormField(
                         controller: _pricePerUnitController,
                         onChanged: (_) => _updateTotal(),
+                        inputFormatters: [ThousandsFormatter()],
                         decoration: InputDecoration(
-                          hintText: 'Contoh: 12000',
+                          hintText: 'Contoh: 12.000',
                           prefixText: 'Rp ',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -332,8 +468,9 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value?.isEmpty ?? true) return 'Harga harus diisi';
-                          if (int.tryParse(value!) == null ||
-                              int.parse(value) < 1) {
+                          final cleanValue = value!.replaceAll('.', '');
+                          if (int.tryParse(cleanValue) == null ||
+                              int.parse(cleanValue) < 1) {
                             return 'Harga minimal 1';
                           }
                           return null;

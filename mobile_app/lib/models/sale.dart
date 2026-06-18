@@ -7,6 +7,7 @@ class Sale {
   final String buyerName;
   final String? buyerPhone;
   final String? notes;
+  final int? seasonId;
   final String status;
 
   Sale({
@@ -18,6 +19,7 @@ class Sale {
     required this.buyerName,
     this.buyerPhone,
     this.notes,
+    this.seasonId,
     required this.status,
   });
 
@@ -49,6 +51,7 @@ class Sale {
       buyerName: json['buyer_name'] as String? ?? '',
       buyerPhone: json['buyer_phone'] as String?,
       notes: json['notes'] as String?,
+      seasonId: json['season_id'] as int?,
       status: statusVal,
     );
   }
