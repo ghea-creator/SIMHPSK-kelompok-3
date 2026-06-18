@@ -2,7 +2,6 @@ class DashboardData {
   final int totalStok;
   final int totalPenjualan;
   final int totalBiaya;
-  final int totalPanen;
   final int targetPanen;
   final List<HarvestSummary> harvests;
   final List<TransactionSummary> transactions;
@@ -12,7 +11,6 @@ class DashboardData {
     required this.totalStok,
     required this.totalPenjualan,
     required this.totalBiaya,
-    required this.totalPanen,
     required this.targetPanen,
     required this.harvests,
     required this.transactions,
@@ -24,7 +22,6 @@ class DashboardData {
       totalStok: json['totalStok'] as int? ?? 0,
       totalPenjualan: json['totalPenjualan'] as int? ?? 0,
       totalBiaya: json['totalBiaya'] as int? ?? 0,
-      totalPanen: json['totalPanen'] as int? ?? 0,
       targetPanen: json['targetPanen'] as int? ?? 0,
       harvests: (json['harvests'] as List?)
               ?.map((e) => HarvestSummary.fromJson(e as Map<String, dynamic>))

@@ -125,25 +125,10 @@ class ApiService {
           .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
-      String message = data['message'] ?? 'Registrasi gagal';
-      
-      if (data['errors'] != null && data['errors'] is Map) {
-        final errors = data['errors'] as Map;
-        final List<String> errorMessages = [];
-        for (var key in errors.keys) {
-          final value = errors[key];
-          if (value is List && value.isNotEmpty) {
-            errorMessages.add(value.first.toString());
-          }
-        }
-        if (errorMessages.isNotEmpty) {
-          message = errorMessages.join(', ');
-        }
-      }
 
       return {
         'success': response.statusCode == 201 && data['success'] == true,
-        'message': message,
+        'message': data['message'] ?? 'Registrasi gagal',
       };
     } catch (e) {
       return {'success': false, 'message': 'Error: ${e.toString()}'};
@@ -662,29 +647,22 @@ class ApiService {
     String? notes,
     String? status,
     String? paymentStatus,
-    int? seasonId,
   }) async {
     try {
-      final body = <String, dynamic>{
-        'quantity': quantity,
-        'price_per_unit': pricePerUnit,
-        'sale_date': saleDate,
-        'buyer_name': buyerName,
-        'buyer_phone': buyerPhone,
-        'notes': notes,
-        'status': status ?? 'completed',
-        'payment_status': paymentStatus ?? 'paid',
-      };
-      
-      if (seasonId != null) {
-        body['season_id'] = seasonId;
-      }
-
       final response = await http
           .post(
             Uri.parse('${ApiConfig.baseUrl}/sales'),
             headers: _getHeaders(),
-            body: jsonEncode(body),
+            body: jsonEncode({
+              'quantity': quantity,
+              'price_per_unit': pricePerUnit,
+              'sale_date': saleDate,
+              'buyer_name': buyerName,
+              'buyer_phone': buyerPhone,
+              'notes': notes,
+              'status': status ?? 'completed',
+              'payment_status': paymentStatus ?? 'paid',
+            }),
           )
           .timeout(const Duration(seconds: 30));
 
@@ -714,7 +692,6 @@ class ApiService {
     String? notes,
     String? status,
     String? paymentStatus,
-    int? seasonId,
   }) async {
     try {
       final body = <String, dynamic>{};
@@ -726,7 +703,6 @@ class ApiService {
       body['notes'] = notes;
       if (status != null) body['status'] = status;
       if (paymentStatus != null) body['payment_status'] = paymentStatus;
-      if (seasonId != null) body['season_id'] = seasonId;
 
       final response = await http
           .put(
@@ -772,7 +748,7 @@ class ApiService {
         };
       }
     } catch (e) {
-      return {'success': false, 'message': 'Error: '};
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
 
@@ -847,26 +823,6 @@ class ApiService {
       return {
         'success': response.statusCode == 200 && data['success'] == true,
         'message': data['message'] ?? 'Password gagal diperbarui',
-      };
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
-  }
-
-
-  Future<Map<String, dynamic>> deleteAccount() async {
-    try {
-      final response = await http
-          .delete(
-            Uri.parse('${ApiConfig.baseUrl}/settings/account'),
-            headers: _getHeaders(),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      final data = jsonDecode(response.body);
-      return {
-        'success': response.statusCode == 200 && data['success'] == true,
-        'message': data['message'] ?? 'Akun gagal dihapus',
       };
     } catch (e) {
       return {'success': false, 'message': e.toString()};

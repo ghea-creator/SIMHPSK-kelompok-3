@@ -490,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: _buildDesktopStatCard(
                 'Total Panen',
-                '${_dashboardData!.totalPanen}',
+                '${_dashboardData!.targetPanen}',
                 'kg',
                 Icons.shopping_basket_outlined,
                 const Color(0xFFF5A623),
@@ -762,8 +762,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDesktopTargetVsActual() {
-    double target = _dashboardData!.targetPanen.toDouble();
-    double actual = _dashboardData!.totalPanen.toDouble();
+    double target = 1000.0;
+    double actual = _dashboardData!.targetPanen
+        .toDouble(); // Using targetPanen as actual for now since we don't have total_harvest directly in dashboardData
     double percentage = target > 0 ? (actual / target) : 0;
 
     return Container(
@@ -1373,8 +1374,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const Color(0xFFE74C3C),
         ),
         _buildStatCard(
-          'Total Panen',
-          '${_dashboardData!.totalPanen}',
+          'Target Panen',
+          '${_dashboardData!.targetPanen}',
           'kg',
           Icons.agriculture,
           const Color(0xFFF39C12),
