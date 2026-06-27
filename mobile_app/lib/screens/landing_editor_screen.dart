@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../login_screen.dart';
+import 'super_admin_dashboard_screen.dart';
+import 'user_management_screen.dart';
+import 'custom_menus_screen.dart';
+import 'feedback_management_screen.dart';
 
 class LandingEditorScreen extends StatefulWidget {
   const LandingEditorScreen({super.key});
@@ -92,52 +102,107 @@ class _LandingEditorScreenState extends State<LandingEditorScreen> with SingleTi
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Landing Page'),
-        backgroundColor: const Color(0xFF135835),
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(text: 'Hero & CTA'),
-            Tab(text: 'Fitur Unggulan'),
-          ],
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF135835)))
-          : Form(
-              key: _formKey,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildHeroTab(),
-                  _buildFeaturesTab(),
-                ],
-              ),
-            ),
-      bottomNavigationBar: _isLoading 
-          ? null 
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                height: 50,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF135835),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: _isSaving ? null : _save,
-                  icon: _isSaving 
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.save_rounded),
-                  label: Text(_isSaving ? 'Menyimpan...' : 'Simpan Semua Perubahan', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+    final auth = context.read<AuthProvider>();
+    final name = auth.user?.name ?? 'Super Admin';
+    final email = auth.user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'Edit Landing Page',
+                  userInitials: initials,
+                  onNotificationTap: _loadLandingContent,
+                ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                AppSidebar(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Edit Landing Page',
+                        subtitle: 'Kelola konten landing page dan CTA',
+                        userInitials: initials,
+                        onRefresh: _loadLandingContent,
+                      ),
+                    Material(
+                      color: AppTheme.cardBg,
+                      child: TabBar(
+                        controller: _tabController,
+                        indicatorColor: AppTheme.green700,
+                        labelColor: AppTheme.textPrimary,
+                        unselectedLabelColor: AppTheme.textSecondary,
+                        tabs: const [
+                          Tab(text: 'Hero & CTA'),
+                          Tab(text: 'Fitur Unggulan'),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : Form(
+                              key: _formKey,
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  _buildHeroTab(),
+                                  _buildFeaturesTab(),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
+          ),
+          bottomNavigationBar: _isLoading
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.green700,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: _isSaving ? null : _save,
+                      icon: _isSaving
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Icon(Icons.save_rounded),
+                      label: Text(_isSaving ? 'Menyimpan...' : 'Simpan Semua Perubahan', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ),
+                ),
+        );
+      },
     );
   }
 
@@ -260,6 +325,63 @@ class _LandingEditorScreenState extends State<LandingEditorScreen> with SingleTi
           ),
         );
       },
+    );
+  }
+
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.dashboard,
+        label: 'Dashboard',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SuperAdminDashboardScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.manage_accounts,
+        label: 'Kelola Pengguna',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const UserManagementScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.edit_note,
+        label: 'Edit Landing Page',
+        isActive: true,
+        onTap: () {},
+      ),
+      SidebarNavItem(
+        icon: Icons.grid_view,
+        label: 'Kelola Menu Shortcut',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CustomMenusScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.rate_review,
+        label: 'Saran & Masukan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FeedbackManagementScreen())),
+      ),
+    ];
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              navigator.pop();
+              await auth.logout();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../models/stock.dart';
 import 'package:intl/intl.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../login_screen.dart';
+import 'home_screen.dart';
+import 'season_screen.dart';
+import 'harvest_screen.dart';
+import 'sales_screen.dart';
+import 'costs_screen.dart';
+import 'reports_screen.dart';
+import 'profile_screen.dart';
+import 'settings_screen.dart';
+import 'feedback_screen.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key});
@@ -49,34 +64,163 @@ class _StockScreenState extends State<StockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        title: const Text('Data Stok', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF27AE60),
-        foregroundColor: Colors.white,
-        elevation: 0,
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    final name = user?.name ?? 'Super Admin';
+    final email = user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'Data Stok',
+                  userInitials: initials,
+                  onNotificationTap: _loadStock,
+                ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                SizedBox(
+                  width: AppTheme.sidebarExpandedW,
+                  child: AppSidebar(
+                    userName: name,
+                    userEmail: email,
+                    userInitials: initials,
+                    onLogout: () => _showLogoutDialog(context),
+                    navItems: _buildNavItems(context),
+                  ),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Data Stok',
+                        subtitle: 'Pantau stok dan riwayat transaksi',
+                        userInitials: initials,
+                        onRefresh: _loadStock,
+                      ),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : RefreshIndicator(
+                              onRefresh: _loadStock,
+                              color: AppTheme.green700,
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  if (constraints.maxWidth > 800) {
+                                    return _buildDesktopLayout();
+                                  }
+                                  return _buildMobileLayout();
+                                },
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.grid_view_rounded,
+        label: 'Dashboard',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.calendar_month_outlined,
+        label: 'Musim Tanam',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.agriculture_outlined,
+        label: 'Pencatatan Panen',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.inventory_2_outlined,
+        label: 'Stok Gudang',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.shopping_cart_outlined,
+        label: 'Penjualan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.attach_money_rounded,
+        label: 'Biaya Produksi',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.bar_chart_rounded,
+        label: 'Laporan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.person,
+        label: 'Profil',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.settings,
+        label: 'Pengaturan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.inventory_2,
+        label: 'Data Stok',
+        isActive: true,
+        onTap: () {},
+      ),
+    ];
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadStock,
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              navigator.pop();
+              await auth.logout();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF27AE60)))
-          : RefreshIndicator(
-              onRefresh: _loadStock,
-              color: const Color(0xFF27AE60),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth > 800) {
-                    return _buildDesktopLayout();
-                  }
-                  return _buildMobileLayout();
-                },
-              ),
-            ),
     );
   }
 

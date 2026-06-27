@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../models/sale.dart';
 import 'package:intl/intl.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../login_screen.dart';
+import 'home_screen.dart';
+import 'season_screen.dart';
+import 'harvest_screen.dart';
+import 'stock_screen.dart';
+import 'costs_screen.dart';
+import 'reports_screen.dart';
+import 'chatbot_screen.dart';
+import 'profile_screen.dart';
+import 'settings_screen.dart';
+import 'feedback_screen.dart';
 import 'add_edit_sale_screen.dart';
 
 class SalesScreen extends StatefulWidget {
@@ -77,49 +93,168 @@ class _SalesScreenState extends State<SalesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        title: const Text('Data Penjualan', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF27AE60),
-        foregroundColor: Colors.white,
-        elevation: 0,
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    final name = user?.name ?? 'Super Admin';
+    final email = user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'Data Penjualan',
+                  userInitials: initials,
+                  onNotificationTap: _loadSales,
+                ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                SizedBox(
+                  width: AppTheme.sidebarExpandedW,
+                  child: AppSidebar(
+                    userName: name,
+                    userEmail: email,
+                    userInitials: initials,
+                    onLogout: () => _showLogoutDialog(context),
+                    navItems: _buildNavItems(context),
+                  ),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Data Penjualan',
+                        subtitle: 'Kelola penjualan dan transaksi',
+                        userInitials: initials,
+                        onRefresh: _loadSales,
+                      ),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : RefreshIndicator(
+                              onRefresh: _loadSales,
+                              color: AppTheme.green700,
+                              child: _sales.isEmpty
+                                  ? _buildEmptyState()
+                                  : LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        if (constraints.maxWidth > 800) {
+                                          return _buildDesktopLayout();
+                                        }
+                                        return _buildMobileLayout();
+                                      },
+                                    ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            backgroundColor: AppTheme.green700,
+            foregroundColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddEditSaleScreen(onSaved: _loadSales),
+                ),
+              ).then((_) => _loadSales());
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Tambah Penjualan', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        );
+      },
+    );
+  }
+
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.grid_view_rounded,
+        label: 'Dashboard',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.calendar_month_outlined,
+        label: 'Musim Tanam',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.agriculture_outlined,
+        label: 'Pencatatan Panen',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.inventory_2_outlined,
+        label: 'Stok Gudang',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.shopping_cart_outlined,
+        label: 'Penjualan',
+        isActive: true,
+        onTap: () {},
+      ),
+      SidebarNavItem(
+        icon: Icons.attach_money_rounded,
+        label: 'Biaya Produksi',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.bar_chart_rounded,
+        label: 'Laporan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.smart_toy_outlined,
+        label: 'TaniBot AI',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ChatbotScreen())),
+      ),
+    ];
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadSales,
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              navigator.pop();
+              await auth.logout();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
           ),
         ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF27AE60)))
-          : RefreshIndicator(
-              onRefresh: _loadSales,
-              color: const Color(0xFF27AE60),
-              child: _sales.isEmpty
-                  ? _buildEmptyState()
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth > 800) {
-                          return _buildDesktopLayout();
-                        }
-                        return _buildMobileLayout();
-                      },
-                    ),
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF27AE60),
-        foregroundColor: Colors.white,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddEditSaleScreen(onSaved: _loadSales),
-            ),
-          ).then((_) => _loadSales());
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Penjualan', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }

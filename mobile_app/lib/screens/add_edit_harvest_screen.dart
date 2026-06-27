@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/harvest.dart';
 import '../models/season.dart';
+import '../widgets/app_theme.dart';
 
 class AddEditHarvestScreen extends StatefulWidget {
   final Harvest? harvest;
@@ -235,7 +236,7 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? 'Ubah Catatan Panen' : 'Tambah Catatan Panen'),
-        backgroundColor: const Color(0xFF27AE60),
+        backgroundColor: AppTheme.green700,
         foregroundColor: Colors.white,
       ),
       body: _isLoading

@@ -770,6 +770,30 @@ class ApiService {
     throw Exception(data['message'] ?? 'Gagal mengambil pengaturan');
   }
 
+  // ==================== NOTIFICATIONS ====================
+
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.baseUrl}/notifications'),
+            headers: _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          // Expecting data['data'] is a list of notifications
+          return (data['data'] as List<dynamic>).map((e) => e as Map<String, dynamic>).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>> updateProfile({
     required String name,
     required String email,

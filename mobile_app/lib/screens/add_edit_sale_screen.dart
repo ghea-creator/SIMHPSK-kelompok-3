@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../models/sale.dart';
 import '../models/season.dart';
 import '../utils/thousands_formatter.dart';
+import '../widgets/app_theme.dart';
 
 class AddEditSaleScreen extends StatefulWidget {
   final Sale? sale;
@@ -276,7 +277,7 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? 'Ubah Catatan Penjualan' : 'Tambah Catatan Penjualan'),
-        backgroundColor: const Color(0xFF27AE60),
+        backgroundColor: AppTheme.green700,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(

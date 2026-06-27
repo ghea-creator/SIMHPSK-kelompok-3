@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../login_screen.dart';
+import 'super_admin_dashboard_screen.dart';
+import 'user_management_screen.dart';
+import 'landing_editor_screen.dart';
+import 'feedback_management_screen.dart';
 
 class CustomMenusScreen extends StatefulWidget {
   const CustomMenusScreen({super.key});
@@ -225,6 +235,37 @@ class _CustomMenusScreenState extends State<CustomMenusScreen> {
     }
   }
 
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.dashboard,
+        label: 'Dashboard',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SuperAdminDashboardScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.manage_accounts,
+        label: 'Kelola Pengguna',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const UserManagementScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.edit_note,
+        label: 'Edit Landing Page',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LandingEditorScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.grid_view,
+        label: 'Kelola Menu Shortcut',
+        isActive: true,
+        onTap: () {},
+      ),
+      SidebarNavItem(
+        icon: Icons.rate_review,
+        label: 'Saran & Masukan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FeedbackManagementScreen())),
+      ),
+    ];
+  }
+
   IconData _parseIcon(String iconName) {
     switch (iconName) {
       case 'spa': return Icons.spa;
@@ -252,66 +293,142 @@ class _CustomMenusScreenState extends State<CustomMenusScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola Shortcut Dashboard'),
-        backgroundColor: const Color(0xFF135835),
-        foregroundColor: Colors.white,
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_box_rounded),
-            onPressed: () => _showAddEditMenuBottomSheet(),
-          )
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              navigator.pop();
+              await auth.logout();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF135835)))
-          : RefreshIndicator(
-              onRefresh: _loadMenus,
-              color: const Color(0xFF135835),
-              child: _menus.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.widgets_outlined, size: 64, color: Colors.grey.shade300),
-                          const SizedBox(height: 12),
-                          const Text('Belum ada menu shortcut tambahan', style: TextStyle(color: Colors.grey)),
-                        ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    final name = auth.user?.name ?? 'Super Admin';
+    final email = auth.user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'Kelola Shortcut',
+                  userInitials: initials,
+                  onNotificationTap: _loadMenus,
+                ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                AppSidebar(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Kelola Shortcut',
+                        subtitle: 'Atur menu pintasan pengguna',
+                        userInitials: initials,
+                        onRefresh: _loadMenus,
                       ),
-                    )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isDesktop = constraints.maxWidth > 800;
-                        if (isDesktop) {
-                          return GridView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.all(24),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: constraints.maxWidth > 1200 ? 3 : 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 2.2,
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : RefreshIndicator(
+                              onRefresh: _loadMenus,
+                              color: AppTheme.green700,
+                              child: _menus.isEmpty
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.widgets_outlined, size: 64, color: Colors.grey.shade300),
+                                          const SizedBox(height: 12),
+                                          const Text('Belum ada menu shortcut tambahan', style: TextStyle(color: Colors.grey)),
+                                        ],
+                                      ),
+                                    )
+                                  : LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final isDesktopContent = constraints.maxWidth > 800;
+                                        if (isDesktopContent) {
+                                          return GridView.builder(
+                                            physics: const AlwaysScrollableScrollPhysics(),
+                                            padding: const EdgeInsets.all(24),
+                                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: constraints.maxWidth > 1200 ? 3 : 2,
+                                              crossAxisSpacing: 16,
+                                              mainAxisSpacing: 16,
+                                              childAspectRatio: 2.2,
+                                            ),
+                                            itemCount: _menus.length,
+                                            itemBuilder: (context, index) {
+                                              return _buildMenuTile(_menus[index]);
+                                            },
+                                          );
+                                        }
+                                        return ListView.separated(
+                                          padding: const EdgeInsets.all(16),
+                                          itemCount: _menus.length,
+                                          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                                          itemBuilder: (context, index) {
+                                            return _buildMenuTile(_menus[index]);
+                                          },
+                                        );
+                                      },
+                                    ),
                             ),
-                            itemCount: _menus.length,
-                            itemBuilder: (context, index) {
-                              return _buildMenuTile(_menus[index]);
-                            },
-                          );
-                        }
-                        return ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _menus.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            return _buildMenuTile(_menus[index]);
-                          },
-                        );
-                      },
                     ),
-            ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _showAddEditMenuBottomSheet(),
+            backgroundColor: AppTheme.green700,
+            icon: const Icon(Icons.add_box_rounded),
+            label: const Text('Tambah Menu'),
+          ),
+        );
+      },
     );
   }
 

@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../models/season.dart';
 import '../utils/download_helper.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../login_screen.dart';
+import 'home_screen.dart';
+import 'season_screen.dart';
+import 'harvest_screen.dart';
+import 'stock_screen.dart';
+import 'sales_screen.dart';
+import 'costs_screen.dart';
+import 'profile_screen.dart';
+import 'settings_screen.dart';
+import 'feedback_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -173,51 +188,194 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Laporan & Analitik'),
-        backgroundColor: const Color(0xFF27AE60),
-        foregroundColor: Colors.white,
-        actions: [
-          _isExporting
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    ),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  tooltip: 'Unduh PDF',
-                  onPressed: _exportPdf,
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    final name = user?.name ?? 'Super Admin';
+    final email = user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    final tabBar = TabBar(
+      controller: _tabController,
+      indicatorColor: AppTheme.green700,
+      indicatorWeight: 3,
+      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+      unselectedLabelColor: AppTheme.textSecondary,
+      labelColor: AppTheme.textPrimary,
+      tabs: const [
+        Tab(text: 'Laba / Rugi'),
+        Tab(text: 'Realisasi Target'),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'Laporan & Analitik',
+                  userInitials: initials,
+                  onNotificationTap: _loadReportData,
                 ),
-          const SizedBox(width: 8),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Laba / Rugi'),
-            Tab(text: 'Realisasi Target'),
-          ],
-        ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                AppSidebar(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Laporan & Analitik',
+                        subtitle: 'Analisis laba rugi dan realisasi target',
+                        userInitials: initials,
+                        onRefresh: _loadReportData,
+                        actions: [
+                          if (_isExporting)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: AppTheme.green700, strokeWidth: 2),
+                                ),
+                              ),
+                            )
+                          else
+                            IconButton(
+                              icon: const Icon(Icons.picture_as_pdf_rounded),
+                              color: AppTheme.textSecondary,
+                              tooltip: 'Unduh PDF',
+                              onPressed: _exportPdf,
+                            ),
+                        ],
+                      ),
+                    Container(
+                      width: double.infinity,
+                      color: AppTheme.cardBg,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: tabBar,
+                    ),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : TabBarView(
+                              controller: _tabController,
+                              children: [
+                                _buildProfitLossTab(),
+                                _buildTargetVsActualTab(),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.grid_view_rounded,
+        label: 'Dashboard',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF27AE60)))
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildProfitLossTab(),
-                _buildTargetVsActualTab(),
-              ],
+      SidebarNavItem(
+        icon: Icons.calendar_month_outlined,
+        label: 'Musim Tanam',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.agriculture_outlined,
+        label: 'Pencatatan Panen',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.inventory_2_outlined,
+        label: 'Stok Gudang',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.shopping_cart_outlined,
+        label: 'Penjualan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.attach_money_rounded,
+        label: 'Biaya Produksi',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.person,
+        label: 'Profil',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.settings,
+        label: 'Pengaturan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.bar_chart,
+        label: 'Laporan',
+        isActive: true,
+        onTap: () {},
+      ),
+    ];
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final authProvider = context.read<AuthProvider>();
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
             ),
+            TextButton(
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                await authProvider.logout();
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
     );
   }
 

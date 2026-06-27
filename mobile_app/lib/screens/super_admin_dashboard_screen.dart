@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../widgets/dashboard_widgets.dart';
+import '../widgets/stat_card.dart';
 import '../login_screen.dart';
 import 'user_management_screen.dart';
 import 'landing_editor_screen.dart';
@@ -48,38 +53,11 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
     }
   }
 
-  Widget _buildDesktopHeader(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Panel Super Admin',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Color(0xFF4B5563)),
-                onPressed: _loadStats,
-                tooltip: 'Refresh',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = context.read<AuthProvider>().user;
+    final name = user?.name ?? 'Super Admin';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -88,106 +66,97 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
         Widget buildBody() {
           return RefreshIndicator(
             onRefresh: _loadStats,
-            color: const Color(0xFF135835),
+            color: AppTheme.green700,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.all(isDesktop ? 32.0 : 20.0),
+              padding: EdgeInsets.all(isDesktop ? AppTheme.pageHPad : 16.0),
               child: Center(
                 child: Container(
-                  constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : 700),
+                  constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Welcome Banner
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF135835), Color(0xFF1A7A4A)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      WelcomeBanner(
+                        userName: name,
+                        seasonLabel: 'Super Admin Dashboard',
+                      ),
+                      const SizedBox(height: 24),
+
+                      GridView.count(
+                        crossAxisCount: isDesktop ? 2 : 1,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        childAspectRatio: isDesktop ? 2.8 : 1.9,
+                        children: [
+                          StatCard(
+                            icon: Icons.people_outline,
+                            iconBg: AppTheme.blue100,
+                            iconColor: AppTheme.blue600,
+                            label: 'Total Petani',
+                            value: '$_totalUsers',
+                            badgeLabel: 'Aktif',
+                            badgeBg: AppTheme.green100,
+                            badgeTextColor: AppTheme.green700,
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          StatCard(
+                            icon: Icons.verified_user_outlined,
+                            iconBg: AppTheme.green100,
+                            iconColor: AppTheme.green700,
+                            label: 'Petani Aktif',
+                            value: '$_activeUsers',
+                            subLabel: 'Dari total pengguna terdaftar',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      SectionCard(
+                        title: 'Modul Administrasi',
+                        headerAction: TextButton.icon(
+                          onPressed: _loadStats,
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Muat ulang'),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: GridView.count(
+                          crossAxisCount: isDesktop ? 4 : 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
                           children: [
-                            Text(
-                              'Selamat Datang, ${user?.name ?? 'Admin'}! 👑',
-                              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                            _buildModuleCard(
+                              icon: Icons.manage_accounts_rounded,
+                              title: 'Kelola Pengguna',
+                              desc: 'Registrasi & Impersonasi',
+                              color: AppTheme.green700,
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManagementScreen())).then((_) => _loadStats()),
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Anda masuk dengan hak akses Super Admin. Kelola kelancaran operasional ekosistem kelompok tani kentang.',
-                              style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+                            _buildModuleCard(
+                              icon: Icons.edit_note_rounded,
+                              title: 'Edit Landing Page',
+                              desc: 'Kelola isi CTA depan',
+                              color: AppTheme.blue600,
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LandingEditorScreen())).then((_) => _loadStats()),
+                            ),
+                            _buildModuleCard(
+                              icon: Icons.grid_view_rounded,
+                              title: 'Kelola Shortcut',
+                              desc: 'Modul menu petani',
+                              color: AppTheme.amber600,
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomMenusScreen())).then((_) => _loadStats()),
+                            ),
+                            _buildModuleCard(
+                              icon: Icons.rate_review_rounded,
+                              title: 'Saran & Kritik',
+                              desc: 'Aduan & masukan petani',
+                              color: AppTheme.purple600,
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackManagementScreen())).then((_) => _loadStats()),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Metrics title
-                      const Text(
-                        'Statistik Pengguna',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Stats Cards Row
-                      Row(
-                        children: [
-                          _buildStatCard('Total Petani', '$_totalUsers', Icons.people, Colors.blue),
-                          const SizedBox(width: 16),
-                          _buildStatCard('Petani Aktif', '$_activeUsers', Icons.verified_user, Colors.green),
-                        ],
-                      ),
-                      const SizedBox(height: 36),
-
-                      // Admin Modules Grid
-                      const Text(
-                        'Modul Administrasi',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 16),
-
-                      GridView.count(
-                        crossAxisCount: isDesktop ? 4 : 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: isDesktop ? 1.4 : 1.1,
-                        children: [
-                          _buildModuleCard(
-                            icon: Icons.manage_accounts_rounded,
-                            title: 'Kelola Pengguna',
-                            desc: 'Registrasi & Impersonasi',
-                            color: const Color(0xFF1A7A4A),
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManagementScreen())).then((_) => _loadStats()),
-                          ),
-                          _buildModuleCard(
-                            icon: Icons.edit_note_rounded,
-                            title: 'Edit Landing Page',
-                            desc: 'Kelola isi CTA depan',
-                            color: Colors.blue.shade700,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LandingEditorScreen())).then((_) => _loadStats()),
-                          ),
-                          _buildModuleCard(
-                            icon: Icons.grid_view_rounded,
-                            title: 'Kelola Shortcut',
-                            desc: 'Modul menu petani',
-                            color: Colors.orange.shade800,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomMenusScreen())).then((_) => _loadStats()),
-                          ),
-                          _buildModuleCard(
-                            icon: Icons.rate_review_rounded,
-                            title: 'Saran & Kritik',
-                            desc: 'Aduan & masukan petani',
-                            color: Colors.teal.shade700,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackManagementScreen())).then((_) => _loadStats()),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -198,35 +167,46 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF3F4F6),
+          backgroundColor: AppTheme.pageBg,
           appBar: isDesktop
               ? null
-              : AppBar(
-                  title: const Text('Super Admin Panel'),
-                  backgroundColor: const Color(0xFF135835),
-                  foregroundColor: Colors.white,
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _loadStats,
-                    ),
-                  ],
+              : AppMobileAppBar(
+                  title: 'Super Admin Panel',
+                  userInitials: initials,
+                  onNotificationTap: _loadStats,
                 ),
-          drawer: isDesktop ? null : _buildDrawer(context, isInline: false),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: user?.email ?? '',
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
           body: Row(
             children: [
               if (isDesktop)
-                SizedBox(
-                  width: 250,
-                  child: _buildDrawer(context, isInline: true),
+                AppSidebar(
+                  userName: name,
+                  userEmail: user?.email ?? '',
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
                 ),
               Expanded(
                 child: Column(
                   children: [
-                    if (isDesktop) _buildDesktopHeader(context),
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Super Admin Panel',
+                        subtitle: 'Kelola pengguna dan operasional',
+                        userInitials: initials,
+                        onRefresh: _loadStats,
+                      ),
                     Expanded(
                       child: _isLoading
-                          ? const Center(child: CircularProgressIndicator(color: Color(0xFF135835)))
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
                           : buildBody(),
                     ),
                   ],
@@ -236,35 +216,6 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade200),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -319,79 +270,35 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context, {bool isInline = false}) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: Color(0xFF135835)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                const Icon(Icons.admin_panel_settings, size: 60, color: Colors.white),
-                const SizedBox(height: 10),
-                const Text(
-                  'Super Admin',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  context.read<AuthProvider>().user?.email ?? 'admin@simhpsk.com',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text('Dashboard'),
-            onTap: () {
-              if (!isInline) Navigator.pop(context);
-              _loadStats();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.manage_accounts),
-            title: const Text('Kelola Pengguna'),
-            onTap: () {
-              if (!isInline) Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManagementScreen())).then((_) => _loadStats());
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.edit_note),
-            title: const Text('Edit Landing Page'),
-            onTap: () {
-              if (!isInline) Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const LandingEditorScreen())).then((_) => _loadStats());
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.grid_view),
-            title: const Text('Kelola Menu Shortcut'),
-            onTap: () {
-              if (!isInline) Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomMenusScreen())).then((_) => _loadStats());
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.rate_review),
-            title: const Text('Saran & Masukan'),
-            onTap: () {
-              if (!isInline) Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackManagementScreen())).then((_) => _loadStats());
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
-            onTap: () => _showLogoutDialog(context),
-          ),
-        ],
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.dashboard,
+        label: 'Dashboard',
+        isActive: true,
+        onTap: _loadStats,
       ),
-    );
+      SidebarNavItem(
+        icon: Icons.manage_accounts,
+        label: 'Kelola Pengguna',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManagementScreen())).then((_) => _loadStats()),
+      ),
+      SidebarNavItem(
+        icon: Icons.edit_note,
+        label: 'Edit Landing Page',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LandingEditorScreen())).then((_) => _loadStats()),
+      ),
+      SidebarNavItem(
+        icon: Icons.grid_view,
+        label: 'Kelola Menu Shortcut',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomMenusScreen())).then((_) => _loadStats()),
+      ),
+      SidebarNavItem(
+        icon: Icons.rate_review,
+        label: 'Saran & Masukan',
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackManagementScreen())).then((_) => _loadStats()),
+      ),
+    ];
   }
 
   void _showLogoutDialog(BuildContext context) {

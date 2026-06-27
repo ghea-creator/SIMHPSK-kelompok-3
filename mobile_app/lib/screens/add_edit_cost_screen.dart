@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../models/cost.dart';
 import '../models/season.dart';
 import '../utils/thousands_formatter.dart';
+import '../widgets/app_theme.dart';
 
 class AddEditCostScreen extends StatefulWidget {
   final Cost? cost;
@@ -161,7 +162,7 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? 'Ubah Catatan Biaya' : 'Tambah Catatan Biaya'),
-        backgroundColor: const Color(0xFF27AE60),
+        backgroundColor: AppTheme.green700,
         foregroundColor: Colors.white,
       ),
       body: _isLoadingSeasons

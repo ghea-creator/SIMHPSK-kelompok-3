@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
 import 'package:provider/provider.dart';
+import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../login_screen.dart';
+import 'home_screen.dart';
+import 'season_screen.dart';
+import 'harvest_screen.dart';
+import 'stock_screen.dart';
+import 'sales_screen.dart';
+import 'costs_screen.dart';
+import 'reports_screen.dart';
+import 'profile_screen.dart';
+import 'feedback_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -263,76 +276,194 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pengaturan'),
-        backgroundColor: const Color(0xFF27AE60),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadSettings),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF27AE60)),
-            )
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth > 900;
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    final name = user?.name ?? 'Super Admin';
+    final email = user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
 
-                return SingleChildScrollView(
-                  padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
-                  child: Center(
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: isDesktop ? 1200 : 700,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'Pengaturan',
+                  userInitials: initials,
+                  onNotificationTap: _loadSettings,
+                ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                AppSidebar(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: _buildNavItems(context),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Pengaturan',
+                        subtitle: 'Atur profil, keamanan, dan notifikasi',
+                        userInitials: initials,
+                        onRefresh: _loadSettings,
                       ),
-                      child: isDesktop
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      _buildProfileCard(),
-                                      const SizedBox(height: 20),
-                                      _buildPasswordCard(),
-                                    ],
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
+                              child: Center(
+                                child: Container(
+                                  constraints: BoxConstraints(
+                                    maxWidth: isDesktop ? 1200 : 700,
                                   ),
+                                  child: isDesktop
+                                      ? Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                children: [
+                                                  _buildProfileCard(),
+                                                  const SizedBox(height: 20),
+                                                  _buildPasswordCard(),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 24),
+                                            Expanded(
+                                              child: Column(
+                                                children: [
+                                                  _buildGudangCard(),
+                                                  const SizedBox(height: 20),
+                                                  _buildNotificationCard(),
+                                                  const SizedBox(height: 20),
+                                                  _buildFeedbackCard(),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          children: [
+                                            _buildProfileCard(),
+                                            const SizedBox(height: 16),
+                                            _buildPasswordCard(),
+                                            const SizedBox(height: 16),
+                                            _buildGudangCard(),
+                                            const SizedBox(height: 16),
+                                            _buildNotificationCard(),
+                                            const SizedBox(height: 16),
+                                            _buildFeedbackCard(),
+                                            const SizedBox(height: 24),
+                                          ],
+                                        ),
                                 ),
-                                const SizedBox(width: 24),
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      _buildGudangCard(),
-                                      const SizedBox(height: 20),
-                                      _buildNotificationCard(),
-                                      const SizedBox(height: 20),
-                                      _buildFeedbackCard(),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                _buildProfileCard(),
-                                const SizedBox(height: 16),
-                                _buildPasswordCard(),
-                                const SizedBox(height: 16),
-                                _buildGudangCard(),
-                                const SizedBox(height: 16),
-                                _buildNotificationCard(),
-                                const SizedBox(height: 16),
-                                _buildFeedbackCard(),
-                                const SizedBox(height: 24),
-                              ],
+                              ),
                             ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<SidebarNavItem> _buildNavItems(BuildContext context) {
+    return [
+      SidebarNavItem(
+        icon: Icons.grid_view_rounded,
+        label: 'Dashboard',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.calendar_month_outlined,
+        label: 'Musim Tanam',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.agriculture_outlined,
+        label: 'Pencatatan Panen',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.inventory_2_outlined,
+        label: 'Stok Gudang',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.shopping_cart_outlined,
+        label: 'Penjualan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.attach_money_rounded,
+        label: 'Biaya Produksi',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.bar_chart_rounded,
+        label: 'Laporan',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.person,
+        label: 'Profil',
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+      ),
+      SidebarNavItem(
+        icon: Icons.settings,
+        label: 'Pengaturan',
+        isActive: true,
+        onTap: () {},
+      ),
+    ];
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              navigator.pop();
+              await auth.logout();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
     );
   }
 
