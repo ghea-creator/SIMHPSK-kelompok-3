@@ -95,9 +95,8 @@ class _AppHeaderState extends State<AppHeader> {
       child: Row(
         children: [
           // Title + date
-          Expanded(
+Expanded(
             child: Column(
-
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
