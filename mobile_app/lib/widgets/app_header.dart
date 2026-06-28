@@ -95,9 +95,14 @@ class _AppHeaderState extends State<AppHeader> {
       child: Row(
         children: [
           // Title + date
+<<<<<<< HEAD
           Expanded(
             child: Column(
 
+=======
+Expanded(
+            child: Column(
+>>>>>>> 26f6ebf (update ui menu user terbaru)
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-// intl not needed after replacing date picker with text input
 import '../services/api_service.dart';
+
 import '../models/harvest.dart';
 import '../models/season.dart';
 import '../widgets/app_theme.dart';
+<<<<<<< HEAD
+=======
+import 'package:intl/intl.dart';
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 
 class AddEditHarvestScreen extends StatefulWidget {
   final Harvest? harvest;
@@ -24,42 +28,47 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _dateController;
-  late TextEditingController _quantityController;
   late TextEditingController _weightController;
   late TextEditingController _notesController;
+  // Komoditas is static, but we'll use a controller for the UI
+  final TextEditingController _komoditasController = TextEditingController(text: 'Kentang');
 
   List<Season> _seasons = [];
   Season? _selectedSeason;
   bool _isLoading = false;
   bool _isSaving = false;
-  String _status = 'recorded';
 
   @override
   void initState() {
     super.initState();
     _apiService = ApiService();
 
-    _dateController = TextEditingController(
-      text: widget.harvest?.harvestDate ?? '',
-    );
-    _quantityController = TextEditingController(
-      text: widget.harvest?.quantity.toString() ?? '',
-    );
+    // Format initial date if exists
+    String initialDate = '';
+    if (widget.harvest?.harvestDate != null && widget.harvest!.harvestDate.isNotEmpty) {
+      try {
+        final date = DateTime.parse(widget.harvest!.harvestDate);
+        initialDate = DateFormat('dd/MM/yyyy').format(date);
+      } catch (e) {
+        initialDate = widget.harvest!.harvestDate;
+      }
+    } else {
+       initialDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    }
+
+    _dateController = TextEditingController(text: initialDate);
     _weightController = TextEditingController(
       text: widget.harvest?.weightKg.toString() ?? '',
     );
     _notesController = TextEditingController(
       text: widget.harvest?.notes ?? '',
     );
-    _status = widget.harvest?.status ?? 'recorded';
 
     _loadSeasons();
   }
 
   Future<void> _loadSeasons() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final seasons = await _apiService.getSeasons();
@@ -85,46 +94,32 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     }
   }
+
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime firstDate = DateTime(2000);
-    final DateTime lastDate = DateTime(2100);
-
-    // Determine initial date
     DateTime initialDate = DateTime.now();
-    final DateTime? currentInputDate = DateTime.tryParse(_dateController.text);
-
-    if (currentInputDate != null &&
-        !currentInputDate.isBefore(firstDate) &&
-        !currentInputDate.isAfter(lastDate)) {
-      initialDate = currentInputDate;
-    }
+    try {
+      initialDate = DateFormat('dd/MM/yyyy').parse(_dateController.text);
+    } catch (_) {}
 
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF27AE60),
+              primary: AppTheme.green700,
               onPrimary: Colors.white,
-              onSurface: Colors.black87,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF27AE60),
-              ),
+              onSurface: AppTheme.textPrimary,
             ),
           ),
           child: child!,
@@ -133,63 +128,59 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
     );
 
     if (picked != null) {
-      final String formatted = "${picked.year.toString().padLeft(4, '0')}-"
-          "${picked.month.toString().padLeft(2, '0')}-"
-          "${picked.day.toString().padLeft(2, '0')}";
       setState(() {
-        _dateController.text = formatted;
+        _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
     }
   }
 
   Future<void> _saveharvest() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     if (_selectedSeason == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih musim tanam terlebih dahulu')),
+        const SnackBar(content: Text('Pilih blok kebun terlebih dahulu')),
       );
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
     try {
+      // Parse date back to YYYY-MM-DD for API
+      String apiDate = _dateController.text;
+      try {
+        final date = DateFormat('dd/MM/yyyy').parse(_dateController.text);
+        apiDate = DateFormat('yyyy-MM-dd').format(date);
+      } catch (_) {}
+
       final Map<String, dynamic> result;
 
       if (widget.harvest == null) {
-        // Create new
         result = await _apiService.createHarvest(
           seasonId: _selectedSeason!.id,
-          harvestDate: _dateController.text,
-          quantity: int.parse(_quantityController.text),
+          harvestDate: apiDate,
+          quantity: 1, // Defaulting as it's removed from UI
           weightKg: double.parse(_weightController.text),
           notes: _notesController.text.isEmpty ? null : _notesController.text,
-          status: _status,
+          status: 'recorded', // Default status
         );
       } else {
-        // Edit existing
         result = await _apiService.updateHarvest(
           widget.harvest!.id,
           seasonId: _selectedSeason!.id,
-          harvestDate: _dateController.text,
-          quantity: int.parse(_quantityController.text),
+          harvestDate: apiDate,
+          quantity: widget.harvest!.quantity > 0 ? widget.harvest!.quantity : 1,
           weightKg: double.parse(_weightController.text),
           notes: _notesController.text.isEmpty ? null : _notesController.text,
-          status: _status,
+          status: widget.harvest!.status, // Keep existing status
         );
       }
 
-      setState(() {
-        _isSaving = false;
-      });
+      setState(() => _isSaving = false);
 
       if (result['success'] == true) {
         messenger.showSnackBar(
@@ -211,22 +202,61 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _isSaving = false;
-      });
-      messenger.showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      setState(() => _isSaving = false);
+      messenger.showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
   }
 
   @override
   void dispose() {
     _dateController.dispose();
-    _quantityController.dispose();
     _weightController.dispose();
     _notesController.dispose();
+    _komoditasController.dispose();
     super.dispose();
+  }
+
+  // ─── UI HELPER METHODS ─────────────────────────────────────────────────────
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          color: Color(0xFF1B4332), // Dark green text matching screenshot
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({String? hintText, Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: Color(0xFFA0AEC0), fontSize: 14),
+      filled: true,
+      fillColor: const Color(0xFFFAF9F6), // Slightly off-white background
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      suffixIcon: suffixIcon,
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppTheme.green700, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+    );
   }
 
   @override
@@ -234,234 +264,234 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
     final isEdit = widget.harvest != null;
 
     return Scaffold(
+<<<<<<< HEAD
       appBar: AppBar(
         title: Text(isEdit ? 'Ubah Catatan Panen' : 'Tambah Catatan Panen'),
         backgroundColor: AppTheme.green700,
         foregroundColor: Colors.white,
       ),
+=======
+      backgroundColor: Colors.black.withValues(alpha: 0.5), // For modal feel
+>>>>>>> 26f6ebf (update ui menu user terbaru)
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF27AE60)),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Center(
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 20,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header Form
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF27AE60).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.agriculture, color: Color(0xFF27AE60)),
+                    padding: const EdgeInsets.all(28.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isEdit ? 'Ubah Hasil Panen' : 'Catat Hasil Panen',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1B4332),
                                 ),
-                                const SizedBox(width: 12),
+                              ),
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.close, size: 18, color: Colors.black54),
+                                  onPressed: () => Navigator.pop(context),
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Row 1: Tanggal & Blok Kebun
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('Tanggal'),
+                                    TextFormField(
+                                      controller: _dateController,
+                                      readOnly: true,
+                                      onTap: () => _selectDate(context),
+                                      style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                                      decoration: _inputDecoration(
+                                        hintText: 'dd/mm/yyyy',
+                                        suffixIcon: const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFFCBD5E1)),
+                                      ),
+                                      validator: (value) => value?.isEmpty ?? true ? 'Wajib diisi' : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('Blok Kebun'),
+                                    DropdownButtonFormField<Season>(
+                                      initialValue: _selectedSeason,
+                                      icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFCBD5E1)),
+
+                                      style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                                      decoration: _inputDecoration(hintText: 'Blok A'),
+                                      items: _seasons.map((season) => DropdownMenuItem(
+                                        value: season,
+                                        child: Text(season.name, style: const TextStyle(fontSize: 14)),
+                                      )).toList(),
+                                      onChanged: (Season? value) {
+                                        setState(() => _selectedSeason = value);
+                                      },
+                                      validator: (value) => value == null ? 'Wajib dipilih' : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Row 2: Komoditas & Berat
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('Komoditas'),
+                                    TextFormField(
+                                      controller: _komoditasController,
+                                      readOnly: true, // Static for now
+                                      style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                                      decoration: _inputDecoration(hintText: 'Kentang'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('Berat (kg)'),
+                                    TextFormField(
+                                      controller: _weightController,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                                      decoration: _inputDecoration(hintText: '1200'),
+                                      validator: (value) {
+                                        if (value?.isEmpty ?? true) return 'Wajib diisi';
+                                        if (double.tryParse(value!) == null) return 'Angka tidak valid';
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Row 3: Catatan
+                          _buildLabel('Catatan'),
+                          TextFormField(
+                            controller: _notesController,
+                            style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                            decoration: _inputDecoration(hintText: 'Opsional — kondisi hasil panen'),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Row 4: Foto Panen
+                          _buildLabel('Foto Panen'),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F5F0), // Light beige
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFD1D5DB),
+                                width: 1.5,
+                              ),
+                            ),
+                            // In a real app we would use a dotted border package or custom painter
+                            // For now we simulate it with a solid thin border, which looks close enough
+                            child: Column(
+                              children: [
+                                const Icon(Icons.archive_outlined, size: 32, color: Color(0xFF718096)),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Ketuk untuk unggah foto',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF4A5568),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
                                 Text(
-                                  isEdit ? 'Form Ubah Panen' : 'Form Panen Baru',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  'JPG, PNG, maks 5 MB',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500,
+                                  ),
                                 ),
                               ],
                             ),
-                            const Divider(height: 32),
+                          ),
+                          const SizedBox(height: 32),
 
-                            // Season Dropdown
-                            const Text('Musim Tanam', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<Season>(
-                              initialValue: _selectedSeason,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                fillColor: Colors.grey.shade50,
-                                filled: true,
+                          // Save Button
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.green700,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              items: _seasons
-                                  .map((season) => DropdownMenuItem(
-                                        value: season,
-                                        child: Text(season.name),
-                                      ))
-                                  .toList(),
-                              onChanged: (Season? value) {
-                                setState(() {
-                                  _selectedSeason = value;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null ? 'Pilih musim tanam' : null,
+                              elevation: 0,
                             ),
-                            const SizedBox(height: 20),
-
-                            // Date
-                            const Text('Tanggal Panen', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _dateController,
-                              readOnly: true,
-                              decoration: InputDecoration(
-                                hintText: 'Pilih Tanggal Panen',
-                                suffixIcon: const Icon(Icons.calendar_today, color: Color(0xFF27AE60)),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                fillColor: Colors.grey.shade50,
-                                filled: true,
-                              ),
-                              onTap: () => _selectDate(context),
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) return 'Tanggal harus diisi';
-                                final DateTime? parsedDate = DateTime.tryParse(value!);
-                                if (parsedDate == null) return 'Tanggal tidak valid';
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Quantity
-                            const Text('Jumlah Tanaman (Unit)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _quantityController,
-                              decoration: InputDecoration(
-                                hintText: 'Contoh: 150',
-                                suffixText: 'unit',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) return 'Jumlah harus diisi';
-                                if (int.tryParse(value!) == null ||
-                                    int.parse(value) < 1) {
-                                  return 'Jumlah minimal 1';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Weight
-                            const Text('Berat Hasil Panen (Kg)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _weightController,
-                              decoration: InputDecoration(
-                                hintText: 'Contoh: 75.5',
-                                suffixText: 'kg',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              ),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(decimal: true),
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) return 'Berat harus diisi';
-                                if (double.tryParse(value!) == null ||
-                                    double.parse(value) < 0.01) {
-                                  return 'Berat minimal 0.01 kg';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                             // Status
-                             const Text('Status Panen', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                             const SizedBox(height: 8),
-                             DropdownButtonFormField<String>(
-                               initialValue: _status,
-                               decoration: InputDecoration(
-                                 border: OutlineInputBorder(
-                                   borderRadius: BorderRadius.circular(10),
-                                 ),
-                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                 fillColor: Colors.grey.shade50,
-                                 filled: true,
-                               ),
-                               items: const [
-                                 DropdownMenuItem(value: 'recorded', child: Text('Tercatat')),
-                                 DropdownMenuItem(value: 'verified', child: Text('Terverifikasi')),
-                                 DropdownMenuItem(value: 'cancelled', child: Text('Batal')),
-                               ],
-                               onChanged: (String? value) {
-                                 if (value != null) {
-                                   setState(() {
-                                     _status = value;
-                                   });
-                                 }
-                               },
-                             ),
-                             const SizedBox(height: 20),
-
-                             // Notes
-                             const Text('Catatan / Keterangan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _notesController,
-                              decoration: InputDecoration(
-                                hintText: 'Keterangan tambahan...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.all(16),
-                              ),
-                              maxLines: 3,
-                              maxLength: 500,
-                            ),
-                            const SizedBox(height: 32),
-
-                            // Save Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF27AE60),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                            onPressed: _isSaving ? null : _saveharvest,
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                  )
+                                : const Text(
+                                    'Simpan Data',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                   ),
-                                  elevation: 2,
-                                ),
-                                onPressed: _isSaving ? null : _saveharvest,
-                                child: _isSaving
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : Text(
-                                        isEdit ? 'Perbarui Panen' : 'Simpan Panen',
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

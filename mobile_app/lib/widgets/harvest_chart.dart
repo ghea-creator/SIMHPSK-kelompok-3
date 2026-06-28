@@ -44,6 +44,7 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
     });
   }
 
+<<<<<<< HEAD
   // Sample fallback data when real data is empty
   List<ChartDataPoint> get _effectivePoints {
     final pts = _points;
@@ -58,11 +59,24 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
       ];
     }
     return pts;
+=======
+  List<ChartDataPoint> get _effectivePoints {
+    return _points;
+  }
+
+  bool get _hasData {
+    if (_points.isEmpty) return false;
+    return _points.any((p) => p.harvest > 0 || p.sales > 0);
+>>>>>>> 26f6ebf (update ui menu user terbaru)
   }
 
   @override
   Widget build(BuildContext context) {
     final pts = _effectivePoints;
+<<<<<<< HEAD
+=======
+    final hasData = _hasData;
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +89,12 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
             const Text('Grafik Panen & Penjualan',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
             ),
+<<<<<<< HEAD
             _ToggleButtons(isArea: _isArea, onToggle: (v) => setState(() => _isArea = v)),
+=======
+            if (hasData)
+              _ToggleButtons(isArea: _isArea, onToggle: (v) => setState(() => _isArea = v)),
+>>>>>>> 26f6ebf (update ui menu user terbaru)
           ],
         ),
         const SizedBox(height: 16),
@@ -84,6 +103,40 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
         SizedBox(
           height: 220,
           child: LayoutBuilder(builder: (context, box) {
+<<<<<<< HEAD
+=======
+            if (!hasData) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.insert_chart_outlined_rounded,
+                      size: 48,
+                      color: AppTheme.textSecondary.withValues(alpha: 0.4),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Belum ada data panen & penjualan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Data grafik akan muncul setelah Anda mencatat panen atau penjualan.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+>>>>>>> 26f6ebf (update ui menu user terbaru)
             return _isArea
                 ? _AreaChart(
                     points: pts,

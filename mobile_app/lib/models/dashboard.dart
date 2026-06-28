@@ -6,6 +6,7 @@ class DashboardData {
   final List<HarvestSummary> harvests;
   final List<TransactionSummary> transactions;
   final ProfitLoss profitLoss;
+  final List<MonthlyStat> monthlyStats;
 
   DashboardData({
     required this.totalStok,
@@ -15,6 +16,7 @@ class DashboardData {
     required this.harvests,
     required this.transactions,
     required this.profitLoss,
+    required this.monthlyStats,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,30 @@ class DashboardData {
               .toList() ??
           [],
       profitLoss: ProfitLoss.fromJson(json['profitLoss'] as Map<String, dynamic>? ?? {}),
+      monthlyStats: (json['monthlyStats'] as List?)
+              ?.map((e) => MonthlyStat.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class MonthlyStat {
+  final String label;
+  final double harvest;
+  final double sales;
+
+  MonthlyStat({
+    required this.label,
+    required this.harvest,
+    required this.sales,
+  });
+
+  factory MonthlyStat.fromJson(Map<String, dynamic> json) {
+    return MonthlyStat(
+      label: json['label'] as String? ?? '',
+      harvest: (json['harvest'] as num?)?.toDouble() ?? 0.0,
+      sales: (json['sales'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

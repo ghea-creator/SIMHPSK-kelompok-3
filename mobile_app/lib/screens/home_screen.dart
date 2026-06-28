@@ -22,6 +22,7 @@ import 'feedback_screen.dart';
 import 'season_screen.dart';
 import 'super_admin_dashboard_screen.dart';
 import 'chatbot_screen.dart';
+import '../utils/navigation_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -105,7 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (url.contains('feedback') || url.contains('ulasan')) {
       push(const FeedbackScreen());
     } else if (url.contains('bot') || url.contains('chat')) {
+<<<<<<< HEAD
       Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()));
+=======
+      Navigator.push(context, MaterialPageRoute(builder: (_) => ChatbotScreen()));
+>>>>>>> 26f6ebf (update ui menu user terbaru)
     } else {
       showDialog(context: context, builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -268,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── Nav Items ─────────────────────────────────────────────────────────────
 
   List<SidebarNavItem> _buildNavItems(BuildContext context, {required String isActive}) {
+<<<<<<< HEAD
     return [
       SidebarNavItem(icon: Icons.grid_view_rounded,      label: 'Dashboard',         isActive: isActive == 'dashboard', onTap: _loadDashboard),
       SidebarNavItem(icon: Icons.calendar_month_outlined, label: 'Musim Tanam',       onTap: () => _navTo(const SeasonScreen())),
@@ -286,6 +292,13 @@ class _HomeScreenState extends State<HomeScreen> {
       SidebarNavItem(icon: Icons.person_outline,      label: 'Profil',       onTap: () => _navTo(const ProfileScreen())),
       SidebarNavItem(icon: Icons.feedback_outlined,   label: 'Kirim Ulasan', onTap: () => _navTo(const FeedbackScreen())),
     ];
+=======
+    return NavigationHelper.buildNavItems(context, isActive);
+  }
+
+  List<SidebarNavItem> _buildSecondaryNavItems(BuildContext context) {
+    return NavigationHelper.buildSecondaryNavItems(context, 'dashboard');
+>>>>>>> 26f6ebf (update ui menu user terbaru)
   }
 
   // ─── Main content ────────────────────────────────────────────────────────────
@@ -442,8 +455,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildChartSection() {
+<<<<<<< HEAD
     final harvests = _dashboardData!.harvests.take(7).map((h) => h.quantity.toDouble()).toList();
     final sales    = _dashboardData!.transactions.take(7).map((t) => t.quantity.toDouble()).toList();
+=======
+    final stats = _dashboardData!.monthlyStats;
+    final harvests = stats.map((s) => s.harvest).toList();
+    final sales    = stats.map((s) => s.sales).toList();
+    final labels   = stats.map((s) => s.label).toList();
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -453,7 +473,15 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border.all(color: AppTheme.cardBorder),
         boxShadow: AppTheme.cardShadow,
       ),
+<<<<<<< HEAD
       child: HarvestSalesChart(harvestData: harvests, salesData: sales),
+=======
+      child: HarvestSalesChart(
+        harvestData: harvests,
+        salesData: sales,
+        labels: labels,
+      ),
+>>>>>>> 26f6ebf (update ui menu user terbaru)
     );
   }
 
@@ -771,7 +799,11 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 10),
             _moreItem(Icons.calendar_month_outlined, 'Musim Tanam', AppTheme.green700, () => _navTo(const SeasonScreen())),
             _moreItem(Icons.attach_money_rounded, 'Biaya Produksi', Colors.orange, () => _navTo(const CostsScreen())),
+<<<<<<< HEAD
             _moreItem(Icons.smart_toy_outlined, 'TaniBot AI', AppTheme.blue600, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()))),
+=======
+            _moreItem(Icons.smart_toy_outlined, 'TaniBot AI', AppTheme.blue600, () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatbotScreen()))),
+>>>>>>> 26f6ebf (update ui menu user terbaru)
             _moreItem(Icons.settings_outlined, 'Pengaturan', AppTheme.textSecondary, () => _navTo(const SettingsScreen())),
             _moreItem(Icons.person_outline, 'Profil', AppTheme.textSecondary, () => _navTo(const ProfileScreen())),
             _moreItem(Icons.feedback_outlined, 'Kirim Ulasan', AppTheme.textSecondary, () => _navTo(const FeedbackScreen())),

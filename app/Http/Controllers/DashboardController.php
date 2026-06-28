@@ -61,6 +61,54 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Get the last 6 months up to the latest recorded harvest/sale date (or current date, whichever is later)
+        $latestHarvest = Harvest::where('user_id', $userId)->max('date');
+        $latestSale = Sale::where('user_id', $userId)->max('date');
+        
+        $referenceDate = now();
+        if ($latestHarvest) {
+            $hDate = \Carbon\Carbon::parse($latestHarvest);
+            if ($hDate->isAfter($referenceDate)) {
+                $referenceDate = $hDate;
+            }
+        }
+        if ($latestSale) {
+            $sDate = \Carbon\Carbon::parse($latestSale);
+            if ($sDate->isAfter($referenceDate)) {
+                $referenceDate = $sDate;
+            }
+        }
+
+        $monthlyStats = [];
+        for ($i = 5; $i >= 0; $i--) {
+            // Copy reference date and subtract months
+            $date = $referenceDate->copy()->subMonths($i);
+            $monthNum = $date->month;
+            $year = $date->year;
+            
+            $monthsIndo = [
+                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+                7 => 'Jul', 8 => 'Agt', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+            ];
+            $label = $monthsIndo[$monthNum] ?? $date->format('M');
+
+            $harvestSum = (double)Harvest::where('user_id', $userId)
+                ->whereYear('date', $year)
+                ->whereMonth('date', $monthNum)
+                ->sum('weight_kg');
+
+            $salesSum = (double)Sale::where('user_id', $userId)
+                ->whereYear('date', $year)
+                ->whereMonth('date', $monthNum)
+                ->sum('weight_kg');
+
+            $monthlyStats[] = [
+                'label' => $label,
+                'harvest' => $harvestSum,
+                'sales' => $salesSum,
+            ];
+        }
+
         $data = [
             'totalStok' => $stockBalance,
             'totalPenjualan' => $totalRevenue,
@@ -74,6 +122,7 @@ class DashboardController extends Controller
                 'cost' => $totalCost,
                 'profit' => $estimatedProfit,
             ],
+            'monthlyStats' => $monthlyStats,
         ];
 
         return $this->successResponse($data, 'Data dashboard berhasil diambil.');

@@ -37,12 +37,17 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
     {'value': 'other', 'label': 'Lainnya'},
   ];
 
+  late TextEditingController _dateController;
+
   @override
   void initState() {
     super.initState();
     _selectedDate = (widget.cost != null && widget.cost!.date.isNotEmpty)
         ? (DateTime.tryParse(widget.cost!.date) ?? DateTime.now())
         : DateTime.now();
+    _dateController = TextEditingController(
+      text: DateFormat('dd/MM/yyyy').format(_selectedDate),
+    );
     _selectedCategory = widget.cost?.category ?? 'seed';
     _selectedSeasonId = widget.cost?.seasonId;
     _amountController.text = widget.cost != null ? ThousandsFormatter.format(widget.cost!.amount.toStringAsFixed(0)) : '';
@@ -52,6 +57,7 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
 
   @override
   void dispose() {
+    _dateController.dispose();
     _amountController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -63,7 +69,6 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
       setState(() {
         _seasons = seasons;
         _isLoadingSeasons = false;
-        // If we are in Add Mode and seasons exist, pre-select the first season
         if (widget.cost == null && _selectedSeasonId == null && seasons.isNotEmpty) {
           _selectedSeasonId = seasons.first.id;
         }
@@ -87,7 +92,7 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF27AE60),
+              primary: Color(0xFF2D6A4F),
               onPrimary: Colors.white,
               onSurface: Colors.black87,
             ),
@@ -99,6 +104,7 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
     }
   }
@@ -113,7 +119,6 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
     
     final Map<String, dynamic> result;
     if (widget.cost != null) {
-      // Edit Mode
       result = await _apiService.updateCost(
         widget.cost!.id,
         date: formattedDate,
@@ -123,7 +128,6 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
         notes: _notesController.text.trim(),
       );
     } else {
-      // Add Mode
       result = await _apiService.createCost(
         date: formattedDate,
         seasonId: _selectedSeasonId,
@@ -160,84 +164,208 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
     final isEdit = widget.cost != null;
 
     return Scaffold(
+<<<<<<< HEAD
       appBar: AppBar(
         title: Text(isEdit ? 'Ubah Catatan Biaya' : 'Tambah Catatan Biaya'),
         backgroundColor: AppTheme.green700,
         foregroundColor: Colors.white,
       ),
+=======
+      backgroundColor: AppTheme.pageBg,
+>>>>>>> 26f6ebf (update ui menu user terbaru)
       body: _isLoadingSeasons
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF27AE60)))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
+          : SafeArea(
               child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: Padding(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
                       padding: const EdgeInsets.all(24.0),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Heading Title
+                            // Header: Title and Close button
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF27AE60).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.receipt_long, color: Color(0xFF27AE60)),
-                                ),
-                                const SizedBox(width: 12),
                                 Text(
-                                  isEdit ? 'Form Ubah Biaya' : 'Form Biaya Baru',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  isEdit ? 'Ubah Biaya Produksi' : 'Tambah Biaya Produksi',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1B4332),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, color: Colors.grey),
+                                  onPressed: () => Navigator.pop(context),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.grey.shade100,
+                                    padding: const EdgeInsets.all(8),
+                                  ),
                                 ),
                               ],
                             ),
-                            const Divider(height: 32),
+                            const SizedBox(height: 24),
 
-                            // Date Selector
-                            const Text('Tanggal Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () => _selectDate(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Colors.grey.shade50,
+                            // Row 1: Tanggal and Kategori side by side
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Tanggal',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Color(0xFF1A3428),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      TextFormField(
+                                        controller: _dateController,
+                                        readOnly: true,
+                                        onTap: () => _selectDate(context),
+                                        decoration: const InputDecoration(
+                                          hintText: 'dd/mm/yyyy',
+                                          suffixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey),
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(_selectedDate),
-                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                                    ),
-                                    const Icon(Icons.calendar_today, color: Color(0xFF27AE60)),
-                                  ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Kategori',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Color(0xFF1A3428),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      DropdownButtonFormField<String>(
+                                        value: _selectedCategory,
+                                        decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        ),
+                                        items: _categories.map((c) => DropdownMenuItem<String>(
+                                              value: c['value'],
+                                              child: Text(c['label']!),
+                                            )).toList(),
+                                        onChanged: (val) {
+                                          if (val != null) {
+                                            setState(() => _selectedCategory = val);
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                             const SizedBox(height: 20),
 
-                            // Season Dropdown
-                            const Text('Musim Tanam', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            // Row 2: Deskripsi
+                            const Text(
+                              'Deskripsi',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Color(0xFF1A3428),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _notesController,
+                              decoration: const InputDecoration(
+                                hintText: 'Pupuk NPK 50 kg',
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Deskripsi tidak boleh kosong';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Row 3: Jumlah (Rp)
+                            const Text(
+                              'Jumlah (Rp)',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Color(0xFF1A3428),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _amountController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [ThousandsFormatter()],
+                              decoration: const InputDecoration(
+                                hintText: '1500000',
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Jumlah biaya tidak boleh kosong';
+                                }
+                                final cleanValue = value.replaceAll('.', '');
+                                final val = double.tryParse(cleanValue);
+                                if (val == null || val <= 0) {
+                                  return 'Jumlah biaya harus bernilai positif';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Row 4: Musim Tanam dropdown
+                            const Text(
+                              'Musim Tanam',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Color(0xFF1A3428),
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<int?>(
-                              initialValue: _selectedSeasonId,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                fillColor: Colors.grey.shade50,
-                                filled: true,
+                              value: _selectedSeasonId,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               ),
                               items: [
                                 const DropdownMenuItem<int?>(
@@ -253,95 +381,43 @@ class _AddEditCostScreenState extends State<AddEditCostScreen> {
                                 setState(() => _selectedSeasonId = val);
                               },
                             ),
-                            const SizedBox(height: 20),
-
-                            // Category Selector
-                            const Text('Kategori Biaya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<String>(
-                              initialValue: _selectedCategory,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                fillColor: Colors.grey.shade50,
-                                filled: true,
-                              ),
-                              items: _categories.map((c) => DropdownMenuItem<String>(
-                                    value: c['value'],
-                                    child: Text(c['label']!),
-                                  )).toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _selectedCategory = val);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Amount Input
-                            const Text('Jumlah Pengeluaran (Rp)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                             TextFormField(
-                              controller: _amountController,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [ThousandsFormatter()],
-                              decoration: InputDecoration(
-                                hintText: 'Contoh: 150.000',
-                                prefixText: 'Rp ',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Jumlah biaya tidak boleh kosong';
-                                }
-                                final cleanValue = value.replaceAll('.', '');
-                                final val = double.tryParse(cleanValue);
-                                if (val == null || val <= 0) {
-                                  return 'Jumlah biaya harus berupa angka positif';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Notes Input
-                            const Text('Catatan / Keterangan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _notesController,
-                              maxLines: 3,
-                              decoration: InputDecoration(
-                                hintText: 'Masukkan keterangan tambahan (contoh: Beli bibit granola super 50kg)',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                contentPadding: const EdgeInsets.all(16),
-                              ),
-                            ),
                             const SizedBox(height: 32),
 
-                            // Save Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF27AE60),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  elevation: 2,
+                            // Action Buttons side-by-side
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size.fromHeight(50),
+                                    ),
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text(
+                                      'Batal',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
                                 ),
-                                onPressed: _isSaving ? null : _save,
-                                child: _isSaving
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                      )
-                                    : Text(
-                                        isEdit ? 'Perbarui Biaya' : 'Simpan Pengeluaran',
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                      ),
-                              ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      minimumSize: const Size.fromHeight(50),
+                                    ),
+                                    onPressed: _isSaving ? null : _save,
+                                    child: _isSaving
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                          )
+                                        : const Text(
+                                            'Simpan',
+                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

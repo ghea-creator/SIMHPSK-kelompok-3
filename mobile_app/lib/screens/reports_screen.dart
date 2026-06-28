@@ -1,14 +1,21 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
+=======
+import 'dart:ui' as ui;
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../models/season.dart';
+import '../models/sale.dart';
 import '../utils/download_helper.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
+<<<<<<< HEAD
 import 'home_screen.dart';
 import 'season_screen.dart';
 import 'harvest_screen.dart';
@@ -18,6 +25,21 @@ import 'costs_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'feedback_screen.dart';
+=======
+import '../utils/navigation_helper.dart';
+
+class MonthlyData {
+  final String label;
+  final DateTime date;
+  double revenue;
+  double cost;
+  
+  MonthlyData(this.label, this.date, this.revenue, this.cost);
+  
+  double get profit => revenue - cost;
+  double get margin => revenue > 0 ? (profit / revenue) * 100 : 0;
+}
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 
 class ReportsScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -27,22 +49,18 @@ class ReportsScreen extends StatefulWidget {
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProviderStateMixin {
+class _ReportsScreenState extends State<ReportsScreen> {
   final ApiService _apiService = ApiService();
-  late TabController _tabController;
   
-  // Profit & Loss data
-  bool _isPLReady = false;
   int? _selectedSeasonId;
   List<Season> _seasons = [];
-  int _totalHarvest = 0;
+  
   double _totalRevenue = 0.0;
   double _totalCost = 0.0;
   double _profit = 0.0;
   
-  // Target vs Actual data
-  bool _isTvAReady = false;
-  List<dynamic> _tvaData = [];
+  List<MonthlyData> _monthlyData = [];
+  Map<String, double> _costBreakdown = {};
   
   bool _isLoading = true;
   bool _isExporting = false;
@@ -50,48 +68,87 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
-    _tabController.addListener(_handleTabChange);
-    _loadReportData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.removeListener(_handleTabChange);
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _handleTabChange() {
-    if (_tabController.indexIsChanging) return;
     _loadReportData();
   }
 
   Future<void> _loadReportData() async {
     setState(() => _isLoading = true);
     try {
-      if (_tabController.index == 0) {
-        // Load Seasons and Profit Loss
-        final seasons = await _apiService.getSeasons();
-        final pl = await _apiService.getProfitLossReport(seasonId: _selectedSeasonId);
-        
+      final seasons = await _apiService.getSeasons();
+      final pl = await _apiService.getProfitLossReport(seasonId: _selectedSeasonId);
+      final costs = await _apiService.getCosts(seasonId: _selectedSeasonId);
+      
+      // Fetch sales and filter by season
+      List<Sale> allSales = [];
+      try {
+        allSales = await _apiService.getSales();
+        if (_selectedSeasonId != null) {
+          allSales = allSales.where((s) => s.seasonId == _selectedSeasonId).toList();
+        }
+      } catch (e) {
+        // Ignored if sales api fails
+      }
+      
+      // Calculate monthly data
+      Map<String, MonthlyData> monthlyMap = {};
+      final monthFormat = DateFormat('MMM yyyy');
+      
+      for (var c in costs) {
+        try {
+          final dt = DateTime.parse(c.date);
+          final label = monthFormat.format(dt);
+          monthlyMap.putIfAbsent(label, () => MonthlyData(label, DateTime(dt.year, dt.month), 0, 0));
+          monthlyMap[label]!.cost += c.amount;
+        } catch (_) {}
+      }
+      
+      for (var s in allSales) {
+        try {
+          final dt = DateTime.parse(s.saleDate);
+          final label = monthFormat.format(dt);
+          monthlyMap.putIfAbsent(label, () => MonthlyData(label, DateTime(dt.year, dt.month), 0, 0));
+          monthlyMap[label]!.revenue += s.totalPrice;
+        } catch (_) {}
+      }
+      
+      final sortedMonths = monthlyMap.values.toList()..sort((a, b) => a.date.compareTo(b.date));
+      
+      // Calculate breakdown
+      double bibitPupuk = 0;
+      double pestisida = 0;
+      double operasional = 0;
+      
+      for (var c in costs) {
+        final cat = c.category.toLowerCase();
+        if (cat == 'seed' || cat == 'fertilizer') {
+          bibitPupuk += c.amount;
+        } else if (cat == 'pesticide') {
+          pestisida += c.amount;
+        } else {
+          operasional += c.amount;
+        }
+      }
+      
+      if (mounted) {
         setState(() {
           _seasons = seasons;
           if (pl != null) {
-            _totalHarvest = pl['total_harvest_kg'] as int? ?? 0;
             _totalRevenue = (pl['total_revenue'] as num? ?? 0).toDouble();
             _totalCost = (pl['total_cost'] as num? ?? 0).toDouble();
             _profit = (pl['profit'] as num? ?? 0).toDouble();
+          } else {
+            _totalRevenue = 0;
+            _totalCost = 0;
+            _profit = 0;
           }
-          _isPLReady = true;
-          _isLoading = false;
-        });
-      } else {
-        // Load Target vs Actual
-        final tva = await _apiService.getTargetVsActualReport();
-        setState(() {
-          _tvaData = tva;
-          _isTvAReady = true;
+          
+          _monthlyData = sortedMonths;
+          _costBreakdown = {
+            'Bibit & Pupuk': bibitPupuk,
+            'Pestisida': pestisida,
+            'Operasional & Upah': operasional,
+          };
+          
           _isLoading = false;
         });
       }
@@ -104,16 +161,10 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     }
   }
 
-  String _formatRp(double val) {
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    return formatter.format(val);
-  }
-
   Future<void> _exportPdf() async {
     if (_isExporting) return;
     setState(() => _isExporting = true);
 
-    // Show progress dialog
     if (mounted) {
       showDialog(
         context: context,
@@ -121,7 +172,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
         builder: (ctx) => const AlertDialog(
           content: Row(
             children: [
-              CircularProgressIndicator(color: Color(0xFF27AE60)),
+              CircularProgressIndicator(color: AppTheme.green700),
               SizedBox(width: 20),
               Expanded(child: Text('Sedang membuat PDF...\nMohon tunggu sebentar.')),
             ],
@@ -131,20 +182,11 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     }
 
     try {
-      final List<int>? pdfBytes;
-      final String filename;
+      final pdfBytes = await _apiService.downloadProfitLossReportPdf(seasonId: _selectedSeasonId);
+      final filename = _selectedSeasonId != null
+          ? 'Laporan_Laba_Rugi_Musim_$_selectedSeasonId.pdf'
+          : 'Laporan_Laba_Rugi_Semua_Musim.pdf';
 
-      if (_tabController.index == 0) {
-        pdfBytes = await _apiService.downloadProfitLossReportPdf(seasonId: _selectedSeasonId);
-        filename = _selectedSeasonId != null
-            ? 'Laporan_Laba_Rugi_Musim_$_selectedSeasonId.pdf'
-            : 'Laporan_Laba_Rugi_Semua_Musim.pdf';
-      } else {
-        pdfBytes = await _apiService.downloadTargetVsActualReportPdf();
-        filename = 'Laporan_Target_vs_Realisasi.pdf';
-      }
-
-      // Close progress dialog
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isExporting = false);
 
@@ -152,38 +194,62 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
         downloadFile(pdfBytes, filename);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Laporan PDF berhasil diunduh!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
+            const SnackBar(content: Text('Laporan PDF berhasil diunduh!'), backgroundColor: Colors.green),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Gagal mengunduh PDF: Data kosong'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 4),
-            ),
+            const SnackBar(content: Text('Gagal mengunduh PDF: Data kosong'), backgroundColor: Colors.red),
           );
         }
       }
     } catch (e) {
-      // Close progress dialog
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isExporting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Gagal ekspor PDF: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
+          SnackBar(content: Text('Gagal ekspor PDF: $e'), backgroundColor: Colors.red),
         );
       }
     }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final authProvider = context.read<AuthProvider>();
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                await authProvider.logout();
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatJt(double value) {
+    final double result = value / 1000000;
+    return 'Rp ${result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 1)} jt';
   }
 
   @override
@@ -194,6 +260,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     final email = user?.email ?? '';
     final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
 
+<<<<<<< HEAD
     final tabBar = TabBar(
       controller: _tabController,
       indicatorColor: AppTheme.green700,
@@ -210,13 +277,29 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
+=======
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+        final selectedSeasonName = _selectedSeasonId != null 
+            ? _seasons.firstWhere((s) => s.id == _selectedSeasonId, orElse: () => Season(id: 0, name: 'Semua Musim Tanam', startDate: '', endDate: '', status: '')).name
+            : 'Semua Musim Tanam';
+            
+        final monthRangeStr = _monthlyData.isNotEmpty 
+            ? '${_monthlyData.first.label.split(' ')[0]} - ${_monthlyData.last.label.split(' ')[0]} ${_monthlyData.last.label.split(' ')[1]}'
+            : 'Belum ada data';
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 
         return Scaffold(
           backgroundColor: AppTheme.pageBg,
           appBar: isDesktop
               ? null
               : AppMobileAppBar(
+<<<<<<< HEAD
                   title: 'Laporan & Analitik',
+=======
+                  title: 'Laporan',
+>>>>>>> 26f6ebf (update ui menu user terbaru)
                   userInitials: initials,
                   onNotificationTap: _loadReportData,
                 ),
@@ -227,6 +310,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
+<<<<<<< HEAD
                   navItems: _buildNavItems(context),
                 ),
           body: Row(
@@ -612,410 +696,417 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                 Text(
                   isLoss ? 'Beban biaya tinggi' : 'Margin keuntungan sehat',
                   style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+=======
+                  navItems: NavigationHelper.buildNavItems(context, 'reports'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'reports'),
+>>>>>>> 26f6ebf (update ui menu user terbaru)
                 ),
-              ],
+          body: Row(
+            children: [
+              if (isDesktop)
+                AppSidebar(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: NavigationHelper.buildNavItems(context, 'reports'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'reports'),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'Laporan',
+                        subtitle: '$selectedSeasonName • $monthRangeStr',
+                        userInitials: initials,
+                        onRefresh: _loadReportData,
+                      ),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          : RefreshIndicator(
+                              onRefresh: _loadReportData,
+                              color: AppTheme.green700,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.all(32),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    _buildTitleAndExportRow(selectedSeasonName, monthRangeStr, isDesktop),
+                                    const SizedBox(height: 24),
+                                    _buildTopStatsCards(isDesktop),
+                                    const SizedBox(height: 24),
+                                    if (isDesktop)
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(flex: 2, child: _buildChartCard()),
+                                          const SizedBox(width: 24),
+                                          Expanded(flex: 1, child: _buildCostDetailCard()),
+                                        ],
+                                      )
+                                    else
+                                      Column(
+                                        children: [
+                                          _buildChartCard(),
+                                          const SizedBox(height: 24),
+                                          _buildCostDetailCard(),
+                                        ],
+                                      ),
+                                    const SizedBox(height: 24),
+                                    _buildMonthlyTable(isDesktop),
+                                  ],
+                                ),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTitleAndExportRow(String seasonName, String monthRange, bool isDesktop) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Laporan Untung/Rugi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+            const SizedBox(height: 4),
+            Text('$seasonName • $monthRange', style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+          ],
+        ),
+        ElevatedButton.icon(
+          onPressed: _isExporting ? null : _exportPdf,
+          icon: _isExporting
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Icon(Icons.picture_as_pdf_outlined, size: 20),
+          label: const Text('Ekspor PDF', style: TextStyle(fontWeight: FontWeight.w600)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppTheme.textPrimary,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppTheme.cardBorder),
             ),
+            elevation: 0,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopStatsCards(bool isDesktop) {
+    final margin = _totalRevenue > 0 ? (_profit / _totalRevenue) * 100 : 0.0;
+    
+    final cards = [
+      Expanded(child: _buildStatCard(
+        title: 'Total Pendapatan',
+        amount: _formatJt(_totalRevenue),
+        color: const Color(0xFFE2F5E9),
+        textColor: const Color(0xFF166534),
+        icon: Icons.trending_up,
+      )),
+      SizedBox(width: isDesktop ? 24 : 12),
+      Expanded(child: _buildStatCard(
+        title: 'Total Biaya',
+        amount: _formatJt(_totalCost),
+        color: const Color(0xFFFFE4E6),
+        textColor: const Color(0xFF9F1239),
+        icon: Icons.trending_down,
+      )),
+      SizedBox(width: isDesktop ? 24 : 12),
+      Expanded(child: _buildStatCard(
+        title: 'Laba Bersih',
+        amount: _formatJt(_profit),
+        color: const Color(0xFFE5F7ED),
+        textColor: const Color(0xFF065F46),
+        icon: Icons.attach_money,
+        subtitle: 'Margin: ${margin.toStringAsFixed(1)}%',
+      )),
+    ];
+    
+    return isDesktop
+        ? Row(children: cards)
+        : Column(
+            children: [
+              Row(children: [cards[0], cards[1], cards[2]]),
+              const SizedBox(height: 12),
+              cards[4]
+            ],
+          );
+  }
+
+  Widget _buildStatCard({required String title, required String amount, required Color color, required Color textColor, required IconData icon, String? subtitle}) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: textColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: textColor, size: 24),
+          const SizedBox(height: 16),
+          Text(title, style: TextStyle(color: textColor.withValues(alpha: 0.8), fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Text(amount, style: TextStyle(color: textColor, fontSize: 28, fontWeight: FontWeight.w800)),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(subtitle, style: TextStyle(color: textColor.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500)),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Tren Bulanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 250,
+            child: _monthlyData.isEmpty
+                ? const Center(child: Text('Belum ada data bulanan', style: TextStyle(color: AppTheme.textSecondary)))
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      return CustomPaint(
+                        size: Size(constraints.maxWidth, constraints.maxHeight),
+                        painter: _BarChartPainter(data: _monthlyData),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRasioCard(double costRatio, double profitRatio, bool isLoss) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.shade200)),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Biaya Produksi', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
-                Text('${(costRatio * 100).toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: costRatio.clamp(0.0, 1.0),
-                backgroundColor: Colors.grey.shade100,
-                color: Colors.red.shade400,
-                minHeight: 12,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Margin Keuntungan', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
-                Text('${(profitRatio * 100).toStringAsFixed(1)}%', style: TextStyle(fontWeight: FontWeight.bold, color: isLoss ? Colors.red : Colors.green)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: profitRatio.clamp(0.0, 1.0),
-                backgroundColor: Colors.grey.shade100,
-                color: isLoss ? Colors.red.shade300 : Colors.green.shade500,
-                minHeight: 12,
-              ),
-            ),
-          ],
-        ),
+  Widget _buildCostDetailCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
       ),
-    );
-  }
-
-  Widget _buildTargetVsActualTab() {
-    if (!_isTvAReady) return const SizedBox.shrink();
-
-    return RefreshIndicator(
-      onRefresh: _loadReportData,
-      color: const Color(0xFF27AE60),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth > 800;
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Detail Biaya', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+          const SizedBox(height: 24),
+          ..._costBreakdown.entries.map((e) {
+            return Column(
               children: [
-                isDesktop
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Realisasi Hasil Panen per Musim', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
-                                const SizedBox(height: 8),
-                                Text('Perbandingan total bobot panen (aktual) terhadap target awal yang ditetapkan kelompok tani.', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton.icon(
-                            onPressed: _isExporting ? null : _exportPdf,
-                            icon: _isExporting
-                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Icon(Icons.picture_as_pdf_rounded),
-                            label: Text(_isExporting ? 'Membuat PDF...' : 'Ekspor PDF'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isExporting ? Colors.grey : const Color(0xFF27AE60),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              elevation: 2,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Realisasi Hasil Panen per Musim', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
-                          const SizedBox(height: 8),
-                          Text('Perbandingan total bobot panen (aktual) terhadap target awal yang ditetapkan kelompok tani.', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _isExporting ? null : _exportPdf,
-                              icon: _isExporting
-                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                  : const Icon(Icons.picture_as_pdf_rounded),
-                              label: Text(_isExporting ? 'Membuat PDF...' : 'Ekspor PDF'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isExporting ? Colors.grey : const Color(0xFF27AE60),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                elevation: 2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                const SizedBox(height: 32),
-                if (_tvaData.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 60.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.eco_rounded, size: 72, color: Colors.grey.shade300),
-                          const SizedBox(height: 12),
-                          Text('Belum ada data musim tanam terdaftar', style: TextStyle(color: Colors.grey.shade500)),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (isDesktop)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 6,
-                        child: _buildTVAGraphCard(),
-                      ),
-                      const SizedBox(width: 32),
-                      Expanded(
-                        flex: 4,
-                        child: _buildTVADetailsList(),
-                      ),
-                    ],
-                  )
-                else
-                  Column(
-                    children: [
-                      _buildTVAGraphCard(),
-                      const SizedBox(height: 20),
-                      _buildTVADetailsList(),
-                    ],
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTVAGraphCard() {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IndicatorLegendBadge(color: Color(0xFF2D9CDB), label: 'Target (kg)'),
-                SizedBox(width: 16),
-                IndicatorLegendBadge(color: Color(0xFF27AE60), label: 'Aktual (kg)'),
-              ],
-            ),
-            const SizedBox(height: 32),
-            ..._tvaData.take(5).map((item) {
-              final double targetVal = (item['target'] as num? ?? 0).toDouble();
-              final double actualVal = (item['actual'] as num? ?? 0).toDouble();
-              final name = item['season_name'] as String? ?? 'Musim';
-              final double percent = (item['percentage'] as num? ?? 0).toDouble();
-              
-              double maxScale = targetVal > actualVal ? targetVal : actualVal;
-              if (maxScale == 0) maxScale = 1.0;
-              
-              final double targetWidthFactor = targetVal / maxScale;
-              final double actualWidthFactor = actualVal / maxScale;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Stack(
-                                children: [
-                                  Container(height: 14, width: double.infinity, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6))),
-                                  FractionallySizedBox(
-                                    widthFactor: targetWidthFactor.clamp(0.02, 1.0),
-                                    child: Container(height: 14, decoration: BoxDecoration(color: const Color(0xFF2D9CDB), borderRadius: BorderRadius.circular(6))),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Stack(
-                                children: [
-                                  Container(height: 14, width: double.infinity, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6))),
-                                  FractionallySizedBox(
-                                    widthFactor: actualWidthFactor.clamp(0.02, 1.0),
-                                    child: Container(height: 14, decoration: BoxDecoration(color: const Color(0xFF27AE60), borderRadius: BorderRadius.circular(6))),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            '${percent.toStringAsFixed(0)}%',
-                            style: TextStyle(
-                              color: percent >= 100 ? Colors.green.shade700 : (percent >= 70 ? Colors.orange.shade700 : Colors.red.shade700),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
+                    Text(e.key, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+                    Text(_formatJt(e.value), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFDC2626))),
                   ],
                 ),
-              );
-            }),
-          ],
-        ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1, color: Color(0xFFF3F4F6)),
+                ),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
 
-  Widget _buildTVADetailsList() {
-    return Column(
-      children: _tvaData.map((item) {
-        final target = item['target'] as int? ?? 0;
-        final actual = item['actual'] as int? ?? 0;
-        final double percent = (item['percentage'] as num? ?? 0).toDouble();
-        final name = item['season_name'] as String? ?? 'Musim';
-        final status = item['status'] as String? ?? 'danger';
-
-        Color statusColor = Colors.red;
-        IconData statusIcon = Icons.error_outline;
-        String statusText = 'Kurang';
-
-        if (status == 'success') {
-          statusColor = Colors.green;
-          statusIcon = Icons.check_circle_outline;
-          statusText = 'Tercapai';
-        } else if (status == 'warning') {
-          statusColor = Colors.orange;
-          statusIcon = Icons.warning_amber_outlined;
-          statusText = 'Hampir';
-        }
-
-        return Card(
-          elevation: 0.5,
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+  Widget _buildMonthlyTable(bool isDesktop) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Text('Rincian per Bulan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+          ),
+          Container(
+            color: const Color(0xFFF9FAFB),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            child: const Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: Icon(statusIcon, color: statusColor, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Text('Target: $target kg', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                          const SizedBox(width: 12),
-                          Text('Hasil: $actual kg', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('${percent.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                      child: Text(statusText, style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
+                Expanded(flex: 2, child: Text('BULAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary, letterSpacing: 0.5))),
+                Expanded(flex: 2, child: Text('PENDAPATAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary, letterSpacing: 0.5))),
+                Expanded(flex: 2, child: Text('BIAYA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary, letterSpacing: 0.5))),
+                Expanded(flex: 2, child: Text('LABA BERSIH', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary, letterSpacing: 0.5))),
+                Expanded(flex: 1, child: Text('MARGIN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecondary, letterSpacing: 0.5))),
               ],
             ),
           ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildBalanceDetailTile({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String value,
-    required String subtitle,
-  }) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(value, style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
-                ],
-              ),
-            ),
-          ],
-        ),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          ..._monthlyData.map((data) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(data.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(_formatJt(data.revenue), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF166534))),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(_formatJt(data.cost), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFDC2626))),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(_formatJt(data.profit), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('${data.margin.toStringAsFixed(1)}%', style: const TextStyle(color: Color(0xFF166534), fontSize: 12, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Color(0xFFF3F4F6)),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
 }
 
-class IndicatorLegendBadge extends StatelessWidget {
-  final Color color;
-  final String label;
+class _BarChartPainter extends CustomPainter {
+  final List<MonthlyData> data;
 
-  const IndicatorLegendBadge({super.key, required this.color, required this.label});
+  _BarChartPainter({required this.data});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+    
+    final count = data.length;
+    double maxVal = 0;
+    for (var d in data) {
+      if (d.revenue > maxVal) maxVal = d.revenue;
+      if (d.cost > maxVal) maxVal = d.cost;
+    }
+    
+    if (maxVal == 0) maxVal = 10000000;
+    
+    // Draw Grid Lines (Y-Axis)
+    final gridPaint = Paint()
+      ..color = const Color(0xFFF3F4F6)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    final textPainter = TextPainter(textDirection: ui.TextDirection.ltr);
+    
+    const double bottomPadding = 30.0;
+    const double leftPadding = 40.0;
+    
+    final chartHeight = size.height - bottomPadding;
+    final chartWidth = size.width - leftPadding;
+    
+    // Draw horizontal grid lines and labels
+    for (int i = 0; i <= 4; i++) {
+      final y = chartHeight - (i * chartHeight / 4);
+      final value = (i * maxVal / 4);
+      
+      // Draw dashed line (simplification: solid line)
+      _drawDashedLine(canvas, Offset(leftPadding, y), Offset(size.width, y), gridPaint);
+      
+      final label = '${(value / 1000000).toStringAsFixed(0)}jt';
+      textPainter.text = TextSpan(text: label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 10));
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(leftPadding - textPainter.width - 8, y - textPainter.height / 2));
+    }
+    
+    // Draw bars
+    final slotWidth = chartWidth / count;
+    final barWidth = slotWidth * 0.3; // 30% for each bar
+    final barGap = slotWidth * 0.1;   // 10% gap between revenue/cost
+    
+    final revenuePaint = Paint()..color = const Color(0xFF4ADE80); // Light Green
+    final costPaint = Paint()..color = const Color(0xFFF87171); // Light Red
+    
+    for (int i = 0; i < count; i++) {
+      final d = data[i];
+      final slotStartX = leftPadding + (i * slotWidth);
+      final centerX = slotStartX + (slotWidth / 2);
+      
+      final revHeight = (d.revenue / maxVal) * chartHeight;
+      final costHeight = (d.cost / maxVal) * chartHeight;
+      
+      // Revenue Bar (Left)
+      final revRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(centerX - barWidth - (barGap/2), chartHeight - revHeight, barWidth, revHeight),
+        const Radius.circular(2)
+      );
+      canvas.drawRRect(revRect, revenuePaint);
+      
+      // Cost Bar (Right)
+      final costRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(centerX + (barGap/2), chartHeight - costHeight, barWidth, costHeight),
+        const Radius.circular(2)
+      );
+      canvas.drawRRect(costRect, costPaint);
+      
+      // X-Axis Label (e.g. 'Jan')
+      final monthName = d.label.split(' ')[0];
+      textPainter.text = TextSpan(text: monthName, style: const TextStyle(color: AppTheme.textMuted, fontSize: 10));
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(centerX - textPainter.width / 2, chartHeight + 10));
+    }
   }
+  
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint) {
+    const dashLen = 4.0;
+    const gapLen = 4.0;
+    double drawn = 0;
+    final totalLen = end.dx - start.dx;
+    while (drawn < totalLen) {
+      canvas.drawLine(Offset(start.dx + drawn, start.dy), Offset(start.dx + math.min(drawn + dashLen, totalLen), start.dy), paint);
+      drawn += dashLen + gapLen;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BarChartPainter oldDelegate) => true;
 }

@@ -275,6 +275,7 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
     final isEdit = widget.sale != null;
 
     return Scaffold(
+<<<<<<< HEAD
       appBar: AppBar(
         title: Text(isEdit ? 'Ubah Catatan Penjualan' : 'Tambah Catatan Penjualan'),
         backgroundColor: AppTheme.green700,
@@ -282,55 +283,63 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
+=======
+      backgroundColor: AppTheme.pageBg,
+      body: SafeArea(
+>>>>>>> 26f6ebf (update ui menu user terbaru)
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 550),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: AppTheme.cardShadow,
+                ),
                 padding: const EdgeInsets.all(24.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Heading
+                      // Header: Title and Close button
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF27AE60).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.shopping_cart, color: Color(0xFF27AE60)),
-                          ),
-                          const SizedBox(width: 12),
                           Text(
-                            isEdit ? 'Form Ubah Penjualan' : 'Form Penjualan Baru',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            isEdit ? 'Ubah Catatan Penjualan' : 'Tambah Catatan Penjualan',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1B4332),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.grey),
+                            onPressed: () => Navigator.pop(context),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              padding: const EdgeInsets.all(8),
+                            ),
                           ),
                         ],
                       ),
-                      const Divider(height: 32),
+                      const SizedBox(height: 24),
 
                       // Season Dropdown
-                      const Text('Musim Tanam (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Musim Tanam (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       _isLoadingSeasons
                           ? const Center(child: CircularProgressIndicator())
                           : DropdownButtonFormField<Season?>(
                               value: _selectedSeason,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                fillColor: Colors.grey.shade50,
-                                filled: true,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               ),
                               items: [
                                 const DropdownMenuItem<Season?>(
@@ -368,21 +377,18 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       const SizedBox(height: 20),
 
                       // Date
-                      const Text('Tanggal Penjualan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Tanggal Penjualan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _dateController,
                         readOnly: true,
                         onTap: () => _selectDate(context),
-                        decoration: InputDecoration(
-                          hintText: 'Pilih Tanggal Penjualan',
-                          suffixIcon: const Icon(Icons.calendar_today, color: Color(0xFF27AE60)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          fillColor: Colors.grey.shade50,
-                          filled: true,
+                        decoration: const InputDecoration(
+                          hintText: 'dd/mm/yyyy',
+                          suffixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
                         validator: (value) {
                           if (value?.isEmpty ?? true) return 'Tanggal harus diisi';
@@ -393,16 +399,15 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       const SizedBox(height: 20),
 
                       // Buyer Name
-                      const Text('Nama Pembeli', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Nama Pembeli', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _buyerNameController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Masukkan nama pembeli...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
                         validator: (value) =>
                             value?.isEmpty ?? true ? 'Nama pembeli harus diisi' : null,
@@ -410,34 +415,32 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       const SizedBox(height: 20),
 
                       // Buyer Phone
-                      const Text('Nomor Telepon Pembeli', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Nomor Telepon Pembeli', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _buyerPhoneController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Contoh: 081234567890 (Opsional)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 20),
 
                       // Quantity
-                      const Text('Jumlah Terjual (Kg)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Jumlah Terjual (Kg)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _quantityController,
                         onChanged: (_) => _updateTotal(),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Masukkan berat kentang...',
                           suffixText: 'kg',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -452,19 +455,17 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       const SizedBox(height: 20),
 
                       // Price Per Unit
-                      const Text('Harga per Kg (Rp)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Harga per Kg (Rp)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _pricePerUnitController,
                         onChanged: (_) => _updateTotal(),
                         inputFormatters: [ThousandsFormatter()],
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Contoh: 12.000',
-                          prefixText: 'Rp ',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -485,7 +486,7 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                           ),
                           child: Row(
@@ -510,15 +511,15 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       ],
 
                       // Payment Status
-                      const Text('Status Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Status Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        initialValue: _paymentStatus,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        value: _paymentStatus,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                         items: const [
                           DropdownMenuItem(
@@ -540,50 +541,59 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                       const SizedBox(height: 20),
 
                       // Notes
-                      const Text('Catatan / Keterangan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const Text('Catatan / Keterangan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A3428))),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _notesController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Keterangan tambahan...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          contentPadding: const EdgeInsets.all(16),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
                         maxLines: 3,
                         maxLength: 500,
                       ),
                       const SizedBox(height: 32),
 
-                      // Save Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF27AE60),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      // Action Buttons side-by-side
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(50),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text(
+                                'Batal',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             ),
-                            elevation: 2,
                           ),
-                          onPressed: _isSaving ? null : _saveSale,
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  isEdit ? 'Perbarui Penjualan' : 'Simpan Penjualan',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                ),
-                        ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(50),
+                              ),
+                              onPressed: _isSaving ? null : _saveSale,
+                              child: _isSaving
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Simpan',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
