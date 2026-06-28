@@ -18,7 +18,6 @@ import 'sales_screen.dart';
 import 'costs_screen.dart';
 import 'reports_screen.dart';
 import 'profile_screen.dart';
-import 'feedback_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

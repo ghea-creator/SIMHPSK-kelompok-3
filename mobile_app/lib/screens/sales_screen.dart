@@ -281,6 +281,22 @@ class _SalesScreenState extends State<SalesScreen> {
     );
   }
 
+  Future<void> _showSaleForm({Sale? sale}) async {
+    final added = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddEditSaleScreen(
+        sale: sale,
+        onSaved: _loadSales,
+      ),
+    );
+
+    if (added == true) {
+      _loadSales();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.read<AuthProvider>();
@@ -364,14 +380,7 @@ class _SalesScreenState extends State<SalesScreen> {
               return FloatingActionButton.extended(
                 backgroundColor: AppTheme.green700,
                 foregroundColor: Colors.white,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddEditSaleScreen(onSaved: _loadSales),
-                    ),
-                  ).then((_) => _loadSales());
-                },
+                onPressed: _showSaleForm,
                 icon: const Icon(Icons.add),
                 label: const Text('Tambah Penjualan',
                     style: TextStyle(fontWeight: FontWeight.bold)),
@@ -484,15 +493,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       color: AppTheme.blue600,
                       bgColor: AppTheme.blue100,
                       tooltip: 'Edit',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                AddEditSaleScreen(sale: sale, onSaved: _loadSales),
-                          ),
-                        ).then((_) => _loadSales());
-                      },
+                      onTap: () => _showSaleForm(sale: sale),
                     ),
                     const SizedBox(width: 8),
                     _ActionBtn(
@@ -556,14 +557,7 @@ class _SalesScreenState extends State<SalesScreen> {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddEditSaleScreen(onSaved: _loadSales),
-                    ),
-                  ).then((_) => _loadSales());
-                },
+                onPressed: _showSaleForm,
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Tambah Penjualan',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
@@ -752,17 +746,7 @@ class _SalesScreenState extends State<SalesScreen> {
                                       color: AppTheme.blue600,
                                       bgColor: AppTheme.blue100,
                                       tooltip: 'Edit',
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                AddEditSaleScreen(
-                                                    sale: sale,
-                                                    onSaved: _loadSales),
-                                          ),
-                                        ).then((_) => _loadSales());
-                                      },
+                                      onTap: () => _showSaleForm(sale: sale),
                                     ),
                                     const SizedBox(width: 8),
                                     _ActionBtn(

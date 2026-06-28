@@ -239,52 +239,54 @@ class _AreaChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return MouseRegion(
       onExit: (_) => onHover(null, null),
-      child: GestureDetector(
-        onTapDown: (d) => _handlePointer(d.localPosition),
-        child: Listener(
-          onPointerMove: (e) => _handlePointer(e.localPosition),
-          onPointerHover: (e) => _handlePointer(e.localPosition),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Chart canvas
-              CustomPaint(
-                painter: _AreaPainter(
-                  points: points,
-                  hoveredIndex: hoveredIndex,
+      child: LayoutBuilder(builder: (context, bounds) {
+        return GestureDetector(
+          onTapDown: (d) => _handlePointer(d.localPosition, bounds.maxWidth),
+          child: Listener(
+            onPointerMove: (e) => _handlePointer(e.localPosition, bounds.maxWidth),
+            onPointerHover: (e) => _handlePointer(e.localPosition, bounds.maxWidth),
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                // Chart canvas
+                CustomPaint(
+                  painter: _AreaPainter(
+                    points: points,
+                    hoveredIndex: hoveredIndex,
+                  ),
+                  size: Size.infinite,
                 ),
-                size: Size.infinite,
-              ),
-              // Tooltip
-              if (hoveredIndex != null && tooltipPos != null)
-                _Tooltip(
-                  point: points[hoveredIndex!],
-                  position: tooltipPos!,
-                ),
-            ],
+                // Tooltip
+                if (hoveredIndex != null && tooltipPos != null)
+                  _Tooltip(
+                    point: points[hoveredIndex!],
+                    position: tooltipPos!,
+                    maxWidth: bounds.maxWidth,
+                  ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
-  void _handlePointer(Offset pos) {
+  void _handlePointer(Offset pos, double width) {
     if (points.isEmpty) { onHover(null, null); return; }
     const double leftPad = 50;
-    // Approximate X positions
+    const double rightPad = 16;
     final count = points.length;
-    // We need size — approximate by iterating
-    // Use 300 as approximate width; refine if needed
-    final approxW = 700.0 - leftPad;
-    final xStep = approxW / (count - 1);
+    final chartW = width - leftPad - rightPad;
+    final xStep = chartW / (count > 1 ? count - 1 : 1);
     int closest = 0;
     double minDist = double.infinity;
+    double closestX = leftPad;
     for (int i = 0; i < count; i++) {
       final x = leftPad + i * xStep;
       final dist = (pos.dx - x).abs();
-      if (dist < minDist) { minDist = dist; closest = i; }
+      if (dist < minDist) { minDist = dist; closest = i; closestX = x; }
     }
-    onHover(closest, pos);
+    onHover(closest, Offset(closestX, pos.dy));
   }
 }
 
@@ -514,28 +516,35 @@ class _AreaPainter extends CustomPainter {
 class _Tooltip extends StatelessWidget {
   final ChartDataPoint point;
   final Offset position;
+  final double maxWidth;
 
-  const _Tooltip({required this.point, required this.position});
+  const _Tooltip({
+    required this.point,
+    required this.position,
+    required this.maxWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
-    const tooltipW = 160.0;
+    const tooltipW = 185.0;
     const tooltipH = 78.0;
-    const leftPad  = 50.0;
+    const safeMargin = 28.0; // allow for box shadow and border space
 
-    // Clamp tooltip position
+    // Clamp tooltip position inside the widget width.
+    final maxLeft = (maxWidth - tooltipW - safeMargin).clamp(0.0, double.infinity);
     double left = position.dx - tooltipW / 2;
-    double top  = position.dy - tooltipH - 16;
-    if (left < leftPad) { left = leftPad; }
-    if (top < 0) { top = position.dy + 16; }
+    left = left.clamp(safeMargin, maxLeft);
+
+    double top = position.dy - tooltipH - 16;
+    if (top < 0) top = position.dy + 16;
 
     return Positioned(
       left: left,
       top: top,
+      width: tooltipW,
       child: Material(
         color: Colors.transparent,
         child: Container(
-          width: tooltipW,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -556,15 +565,19 @@ class _Tooltip extends StatelessWidget {
               Row(children: [
                 Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF2D6A4F), shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                Text('Panen: ${_fmt(point.harvest)} kg',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF2D6A4F), fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text('Panen: ${_fmt(point.harvest)} kg${_percent(point.harvest, point.sales)}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF2D6A4F), fontWeight: FontWeight.w600)),
+                ),
               ]),
               const SizedBox(height: 4),
               Row(children: [
                 Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFE07C00), shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                Text('Penjualan: ${_fmt(point.sales)} kg',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFFE07C00), fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text('Penjualan: ${_fmt(point.sales)} kg${_percent(point.sales, point.harvest)}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFFE07C00), fontWeight: FontWeight.w600)),
+                ),
               ]),
             ],
           ),
@@ -576,6 +589,14 @@ class _Tooltip extends StatelessWidget {
   String _fmt(double v) {
     final i = v.round();
     return i.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+  }
+
+  String _percent(double value, double other) {
+    if (value == 0 && other == 0) return '';
+    final total = value + other;
+    if (total == 0) return '';
+    final percent = (value / total) * 100;
+    return ' (${percent.toStringAsFixed(1)}%)';
   }
 }
 
@@ -604,7 +625,7 @@ class _BarChart extends StatelessWidget {
             onPointerMove: (e) => _handlePointer(e.localPosition, bounds.maxWidth),
             onPointerHover: (e) => _handlePointer(e.localPosition, bounds.maxWidth),
             child: Stack(
-              clipBehavior: Clip.none,
+              clipBehavior: Clip.hardEdge,
               children: [
                 SizedBox.expand(
                   child: CustomPaint(
@@ -612,7 +633,7 @@ class _BarChart extends StatelessWidget {
                   ),
                 ),
                 if (hoveredIndex != null && tooltipPos != null)
-                  _Tooltip(point: points[hoveredIndex!], position: tooltipPos!),
+                  _Tooltip(point: points[hoveredIndex!], position: tooltipPos!, maxWidth: bounds.maxWidth),
               ],
             ),
           ),
@@ -631,12 +652,13 @@ class _BarChart extends StatelessWidget {
 
     int closest = 0;
     double minDist = double.infinity;
+    double closestX = leftPad;
     for (int i = 0; i < count; i++) {
       final centerX = leftPad + slotW * i + slotW / 2;
       final dist = (pos.dx - centerX).abs();
-      if (dist < minDist) { minDist = dist; closest = i; }
+      if (dist < minDist) { minDist = dist; closest = i; closestX = centerX; }
     }
-    onHover(closest, pos);
+    onHover(closest, Offset(closestX, pos.dy));
   }
 }
 

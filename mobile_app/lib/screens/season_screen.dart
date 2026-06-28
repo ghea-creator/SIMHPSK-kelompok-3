@@ -8,22 +8,7 @@ import '../widgets/app_header.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
-<<<<<<< HEAD
-=======
 import '../utils/navigation_helper.dart';
->>>>>>> 26f6ebf (update ui menu user terbaru)
-import 'home_screen.dart';
-import 'harvest_screen.dart';
-import 'stock_screen.dart';
-import 'sales_screen.dart';
-import 'costs_screen.dart';
-import 'reports_screen.dart';
-import 'profile_screen.dart';
-import 'settings_screen.dart';
-<<<<<<< HEAD
-import 'feedback_screen.dart';
-=======
->>>>>>> 26f6ebf (update ui menu user terbaru)
 
 class SeasonScreen extends StatefulWidget {
   const SeasonScreen({super.key});
@@ -143,12 +128,8 @@ class _SeasonScreenState extends State<SeasonScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
-<<<<<<< HEAD
-                  navItems: _buildNavItems(context),
-=======
                   navItems: NavigationHelper.buildNavItems(context, 'season'),
                   secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'season'),
->>>>>>> 26f6ebf (update ui menu user terbaru)
                 ),
           body: Row(
             children: [
@@ -158,12 +139,8 @@ class _SeasonScreenState extends State<SeasonScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
-<<<<<<< HEAD
-                  navItems: _buildNavItems(context),
-=======
                   navItems: NavigationHelper.buildNavItems(context, 'season'),
                   secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'season'),
->>>>>>> 26f6ebf (update ui menu user terbaru)
                 ),
               Expanded(
                 child: Column(
@@ -181,18 +158,6 @@ class _SeasonScreenState extends State<SeasonScreen> {
                           : RefreshIndicator(
                               onRefresh: _loadSeasons,
                               color: AppTheme.green700,
-<<<<<<< HEAD
-                              child: _seasons.isEmpty
-                                  ? _buildEmptyState()
-                                  : LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        if (constraints.maxWidth > 800) {
-                                          return _buildDesktopLayout();
-                                        }
-                                        return _buildMobileLayout();
-                                      },
-                                    ),
-=======
                               child: LayoutBuilder(
                                 builder: (context, constraints) {
                                   if (constraints.maxWidth > 800) {
@@ -201,7 +166,6 @@ class _SeasonScreenState extends State<SeasonScreen> {
                                   return _buildMobileLayout();
                                 },
                               ),
->>>>>>> 26f6ebf (update ui menu user terbaru)
                             ),
                     ),
                   ],
@@ -209,13 +173,6 @@ class _SeasonScreenState extends State<SeasonScreen> {
               ),
             ],
           ),
-<<<<<<< HEAD
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showSeasonForm(),
-            backgroundColor: AppTheme.green700,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Tambah Musim', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-=======
           floatingActionButton: LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth > 800) return const SizedBox.shrink();
@@ -227,66 +184,12 @@ class _SeasonScreenState extends State<SeasonScreen> {
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               );
             },
->>>>>>> 26f6ebf (update ui menu user terbaru)
           ),
         );
       },
     );
   }
 
-<<<<<<< HEAD
-  List<SidebarNavItem> _buildNavItems(BuildContext context) {
-    return [
-      SidebarNavItem(
-        icon: Icons.grid_view_rounded,
-        label: 'Dashboard',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.calendar_month_outlined,
-        label: 'Musim Tanam',
-        isActive: true,
-        onTap: () {},
-      ),
-      SidebarNavItem(
-        icon: Icons.agriculture_outlined,
-        label: 'Pencatatan Panen',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.inventory_2_outlined,
-        label: 'Stok Gudang',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.shopping_cart_outlined,
-        label: 'Penjualan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.attach_money_rounded,
-        label: 'Biaya Produksi',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.bar_chart_rounded,
-        label: 'Laporan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.person,
-        label: 'Profil',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.settings,
-        label: 'Pengaturan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-      ),
-    ];
-  }
-=======
->>>>>>> 26f6ebf (update ui menu user terbaru)
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(
@@ -656,15 +559,18 @@ class _SeasonScreenState extends State<SeasonScreen> {
         label = status;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -953,6 +859,37 @@ class _SeasonFormBottomSheetState extends State<_SeasonFormBottomSheet> {
     }
   }
 
+  InputDecoration _inputDecoration({required String label, Widget? prefixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: prefixIcon,
+      labelStyle: const TextStyle(color: Color(0xFF4A5568)),
+      filled: true,
+      fillColor: const Color(0xFFFAF9F6),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppTheme.green700, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditMode = widget.season != null;
@@ -1002,23 +939,17 @@ class _SeasonFormBottomSheetState extends State<_SeasonFormBottomSheet> {
                   const SizedBox(height: 20),
                   TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Musim Tanam',
-                      prefixIcon: Icon(Icons.calendar_month),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: _inputDecoration(
+                      label: 'Nama Musim Tanam',
+                      prefixIcon: const Icon(Icons.calendar_month),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _startDateController,
-                    decoration: const InputDecoration(
-                      labelText: 'Tanggal Mulai',
-                      prefixIcon: Icon(Icons.date_range),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: _inputDecoration(
+                      label: 'Tanggal Mulai',
+                      prefixIcon: const Icon(Icons.date_range),
                     ),
                     readOnly: true,
                     onTap: () => _selectDate(_startDateController),
@@ -1026,12 +957,9 @@ class _SeasonFormBottomSheetState extends State<_SeasonFormBottomSheet> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _endDateController,
-                    decoration: const InputDecoration(
-                      labelText: 'Tanggal Selesai',
-                      prefixIcon: Icon(Icons.date_range),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: _inputDecoration(
+                      label: 'Tanggal Selesai',
+                      prefixIcon: const Icon(Icons.date_range),
                     ),
                     readOnly: true,
                     onTap: () => _selectDate(_endDateController),
@@ -1039,24 +967,18 @@ class _SeasonFormBottomSheetState extends State<_SeasonFormBottomSheet> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _targetKgController,
-                    decoration: const InputDecoration(
-                      labelText: 'Target Kg',
-                      prefixIcon: Icon(Icons.scale),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: _inputDecoration(
+                      label: 'Target Kg',
+                      prefixIcon: const Icon(Icons.scale),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: _status,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      prefixIcon: Icon(Icons.info),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: _inputDecoration(
+                      label: 'Status',
+                      prefixIcon: const Icon(Icons.info),
                     ),
                     items: const [
                       DropdownMenuItem(value: 'active', child: Text('Aktif')),
@@ -1068,12 +990,9 @@ class _SeasonFormBottomSheetState extends State<_SeasonFormBottomSheet> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _notesController,
-                    decoration: const InputDecoration(
-                      labelText: 'Catatan (Opsional)',
-                      prefixIcon: Icon(Icons.note),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: _inputDecoration(
+                      label: 'Catatan (Opsional)',
+                      prefixIcon: const Icon(Icons.note),
                     ),
                     maxLines: 3,
                   ),

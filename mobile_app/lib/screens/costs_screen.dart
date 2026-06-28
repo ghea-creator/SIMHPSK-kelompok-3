@@ -40,6 +40,22 @@ class _CostsScreenState extends State<CostsScreen> {
   Map<String, double> _costsByCategory = {};
   bool _isLoading = true;
 
+  Future<void> _showCostForm({Cost? cost}) async {
+    final added = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddEditCostScreen(
+        cost: cost,
+        onSaved: _loadData,
+      ),
+    );
+
+    if (added == true) {
+      _loadData();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -228,10 +244,7 @@ class _CostsScreenState extends State<CostsScreen> {
             ],
           ),
           floatingActionButton: isDesktop ? null : FloatingActionButton.extended(
-            onPressed: () async {
-              final added = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEditCostScreen()));
-              if (added == true) _loadData();
-            },
+            onPressed: () => _showCostForm(),
             backgroundColor: AppTheme.green700,
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Tambah Biaya', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -271,10 +284,7 @@ class _CostsScreenState extends State<CostsScreen> {
           ),
         ),
         ElevatedButton.icon(
-          onPressed: () async {
-            final added = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEditCostScreen()));
-            if (added == true) _loadData();
-          },
+          onPressed: () => _showCostForm(),
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Tambah Biaya', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
           style: ElevatedButton.styleFrom(
@@ -498,8 +508,7 @@ class _CostsScreenState extends State<CostsScreen> {
                               bgColor: AppTheme.blue100,
                               tooltip: 'Edit',
                               onTap: () async {
-                                final updated = await Navigator.push(context, MaterialPageRoute(builder: (context) => AddEditCostScreen(cost: cost)));
-                                if (updated == true) _loadData();
+                                await _showCostForm(cost: cost);
                               },
                             ),
                             const SizedBox(width: 8),
@@ -568,10 +577,7 @@ class _CostsScreenState extends State<CostsScreen> {
                           color: AppTheme.blue600,
                           bgColor: AppTheme.blue100,
                           tooltip: 'Edit',
-                          onTap: () async {
-                            final updated = await Navigator.push(context, MaterialPageRoute(builder: (context) => AddEditCostScreen(cost: cost)));
-                            if (updated == true) _loadData();
-                          },
+                          onTap: () => _showCostForm(cost: cost),
                         ),
                         const SizedBox(width: 8),
                         _ActionBtn(

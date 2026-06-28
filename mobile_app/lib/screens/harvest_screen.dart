@@ -600,11 +600,10 @@ class _HarvestScreenState extends State<HarvestScreen> {
                     child: const Row(
                       children: [
                         _ColHeader(text: 'TANGGAL', flex: 3),
-                        _ColHeader(text: 'BLOK', flex: 2),
+                        _ColHeader(text: 'Musim Tanam', flex: 2),
                         _ColHeader(text: 'KOMODITAS', flex: 2),
                         _ColHeader(text: 'BERAT (KG)', flex: 2),
                         _ColHeader(text: 'CATATAN', flex: 3),
-                        _ColHeader(text: 'FOTO', flex: 2),
                         _ColHeader(text: 'AKSI', flex: 2),
                       ],
                     ),
@@ -614,7 +613,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
                   ...List.generate(_harvests.length, (index) {
                     final harvest = _harvests[index];
                     final isLast = index == _harvests.length - 1;
-                    final hasNotes = harvest.notes.isNotEmpty;
                     return Column(
                       children: [
                         Padding(
@@ -677,39 +675,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              // FOTO
-                              Expanded(
-                                flex: 2,
-                                child: hasNotes
-                                    ? Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 5),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.green100,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.image_outlined,
-                                                size: 13,
-                                                color: AppTheme.green700),
-                                            SizedBox(width: 4),
-                                            Text('Ada',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: AppTheme.green700,
-                                                    fontWeight:
-                                                        FontWeight.w600)),
-                                          ],
-                                        ),
-                                      )
-                                    : Text('–',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[400])),
                               ),
                               // AKSI
                               Expanded(
@@ -958,16 +923,19 @@ class _HarvestBlokBadge extends StatelessWidget {
     final idx = label.hashCode.abs() % _palettes.length;
     final bg = _palettes[idx][0];
     final fg = _palettes[idx][1];
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(
-        label,
-        style: TextStyle(
-            fontSize: 12, fontWeight: FontWeight.w700, color: fg),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+        child: Text(
+          label,
+          style: TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w700, color: fg),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
   }

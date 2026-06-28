@@ -3,6 +3,11 @@ class DashboardData {
   final int totalPenjualan;
   final int totalBiaya;
   final int targetPanen;
+  final int minStock;
+  final int maxStock;
+  final bool notifyLowStock;
+  final bool notifyNewSale;
+  final bool notifyCost;
   final List<HarvestSummary> harvests;
   final List<TransactionSummary> transactions;
   final ProfitLoss profitLoss;
@@ -13,6 +18,11 @@ class DashboardData {
     required this.totalPenjualan,
     required this.totalBiaya,
     required this.targetPanen,
+    required this.minStock,
+    required this.maxStock,
+    required this.notifyLowStock,
+    required this.notifyNewSale,
+    required this.notifyCost,
     required this.harvests,
     required this.transactions,
     required this.profitLoss,
@@ -25,6 +35,11 @@ class DashboardData {
       totalPenjualan: json['totalPenjualan'] as int? ?? 0,
       totalBiaya: json['totalBiaya'] as int? ?? 0,
       targetPanen: json['targetPanen'] as int? ?? 0,
+      minStock: json['minStock'] as int? ?? 100,
+      maxStock: json['maxStock'] as int? ?? 5000,
+      notifyLowStock: json['notifyLowStock'] as bool? ?? true,
+      notifyNewSale: json['notifyNewSale'] as bool? ?? true,
+      notifyCost: json['notifyCost'] as bool? ?? true,
       harvests: (json['harvests'] as List?)
               ?.map((e) => HarvestSummary.fromJson(e as Map<String, dynamic>))
               .toList() ??

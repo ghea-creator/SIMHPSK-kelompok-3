@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../models/season.dart';
 import '../models/harvest.dart';
 import '../services/api_service.dart';
@@ -406,7 +405,7 @@ class _TargetScreenState extends State<TargetScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _seasons.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
+      separatorBuilder: (_, _) => const SizedBox(height: 14),
       itemBuilder: (context, index) {
         final season = _seasons[index];
         final target = season.targetKg;

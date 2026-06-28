@@ -133,18 +133,52 @@ class _BuyersScreenState extends State<BuyersScreen> {
     );
   }
 
-  void _showDeleteBuyerNotSupported() {
-    showDialog(
+  Future<void> _deleteBuyer(BuyerSummary buyer) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Fitur Belum Tersedia'),
-        content: const Text('Penghapusan seluruh riwayat pembeli secara langsung belum didukung. Hapus transaksi penjualan secara individual di menu Penjualan.'),
+        title: const Text('Hapus Pembeli'),
+        content: Text(
+          'Hapus pembeli "${buyer.name}" beserta ${buyer.transactionCount} transaksi penjualannya? Tindakan ini tidak dapat dibatalkan.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
+
+    if (confirmed != true || !mounted) return;
+
+    // Delete all sales belonging to this buyer
+    int failed = 0;
+    for (final sale in buyer.sales) {
+      final result = await _apiService.deleteSale(sale.id);
+      if (result['success'] != true) failed++;
+    }
+
+    if (!mounted) return;
+
+    if (failed == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pembeli "${buyer.name}" berhasil dihapus.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$failed transaksi gagal dihapus. Coba lagi.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+    _loadData();
   }
 
   @override
@@ -415,7 +449,7 @@ class _BuyersScreenState extends State<BuyersScreen> {
                       ),
                       const SizedBox(width: 8),
                       InkWell(
-                        onTap: () => _showDeleteBuyerNotSupported(),
+                        onTap: () => _deleteBuyer(buyer),
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.all(6),

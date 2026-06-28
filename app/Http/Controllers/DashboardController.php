@@ -7,6 +7,7 @@ use App\Models\Harvest;
 use App\Models\ProductionCost;
 use App\Models\Sale;
 use App\Models\Season;
+use App\Models\Setting;
 use App\Models\StockTransaction;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
@@ -115,6 +116,11 @@ class DashboardController extends Controller
             'totalBiaya' => $totalCost,
             'totalPanen' => $totalHarvest,
             'targetPanen' => (int)($activeSeason?->target_kg ?? 0),
+            'minStock' => (int)Setting::get('min_stock', 100),
+            'maxStock' => (int)Setting::get('max_stock', 5000),
+            'notifyLowStock' => (bool)Setting::get('notify_low_stock', 1),
+            'notifyNewSale' => (bool)Setting::get('notify_new_sale', 1),
+            'notifyCost' => (bool)Setting::get('notify_cost', 1),
             'harvests' => $recentHarvests,
             'transactions' => $recentTransactions,
             'profitLoss' => [

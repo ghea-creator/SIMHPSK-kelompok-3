@@ -4,10 +4,7 @@ import '../services/api_service.dart';
 import '../models/harvest.dart';
 import '../models/season.dart';
 import '../widgets/app_theme.dart';
-<<<<<<< HEAD
-=======
 import 'package:intl/intl.dart';
->>>>>>> 26f6ebf (update ui menu user terbaru)
 
 class AddEditHarvestScreen extends StatefulWidget {
   final Harvest? harvest;
@@ -264,19 +261,13 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
     final isEdit = widget.harvest != null;
 
     return Scaffold(
-<<<<<<< HEAD
-      appBar: AppBar(
-        title: Text(isEdit ? 'Ubah Catatan Panen' : 'Tambah Catatan Panen'),
-        backgroundColor: AppTheme.green700,
-        foregroundColor: Colors.white,
-      ),
-=======
       backgroundColor: Colors.black.withValues(alpha: 0.5), // For modal feel
->>>>>>> 26f6ebf (update ui menu user terbaru)
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
-          : Center(
-              child: SingleChildScrollView(
+      body: Material(
+        type: MaterialType.transparency,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+            : Center(
+                child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
@@ -328,7 +319,7 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
                           ),
                           const SizedBox(height: 28),
 
-                          // Row 1: Tanggal & Blok Kebun
+                          // Row 1: Tanggal & Musim Tanam
                           Row(
                             children: [
                               Expanded(
@@ -355,13 +346,13 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildLabel('Blok Kebun'),
+                                    _buildLabel('Musim Tanam'),
                                     DropdownButtonFormField<Season>(
                                       initialValue: _selectedSeason,
                                       icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFCBD5E1)),
 
                                       style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
-                                      decoration: _inputDecoration(hintText: 'Blok A'),
+                                      decoration: _inputDecoration(hintText: 'Musim Tanam'),
                                       items: _seasons.map((season) => DropdownMenuItem(
                                         value: season,
                                         child: Text(season.name, style: const TextStyle(fontSize: 14)),
@@ -428,44 +419,6 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Row 4: Foto Panen
-                          _buildLabel('Foto Panen'),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F5F0), // Light beige
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFD1D5DB),
-                                width: 1.5,
-                              ),
-                            ),
-                            // In a real app we would use a dotted border package or custom painter
-                            // For now we simulate it with a solid thin border, which looks close enough
-                            child: Column(
-                              children: [
-                                const Icon(Icons.archive_outlined, size: 32, color: Color(0xFF718096)),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Ketuk untuk unggah foto',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF4A5568),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'JPG, PNG, maks 5 MB',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 32),
 
                           // Save Button
@@ -498,6 +451,7 @@ class _AddEditHarvestScreenState extends State<AddEditHarvestScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 }
