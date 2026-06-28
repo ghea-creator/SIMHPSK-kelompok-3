@@ -8,6 +8,10 @@ import '../widgets/app_header.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
+<<<<<<< HEAD
+=======
+import '../utils/navigation_helper.dart';
+>>>>>>> 26f6ebf (update ui menu user terbaru)
 import 'home_screen.dart';
 import 'season_screen.dart';
 import 'harvest_screen.dart';
@@ -16,7 +20,6 @@ import 'costs_screen.dart';
 import 'reports_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
-import 'feedback_screen.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key});
@@ -90,7 +93,12 @@ class _StockScreenState extends State<StockScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
+<<<<<<< HEAD
                   navItems: _buildNavItems(context),
+=======
+                  navItems: NavigationHelper.buildNavItems(context, 'stock'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'stock'),
+>>>>>>> 26f6ebf (update ui menu user terbaru)
                 ),
           body: Row(
             children: [
@@ -102,7 +110,12 @@ class _StockScreenState extends State<StockScreen> {
                     userEmail: email,
                     userInitials: initials,
                     onLogout: () => _showLogoutDialog(context),
+<<<<<<< HEAD
                     navItems: _buildNavItems(context),
+=======
+                    navItems: NavigationHelper.buildNavItems(context, 'stock'),
+                    secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'stock'),
+>>>>>>> 26f6ebf (update ui menu user terbaru)
                   ),
                 ),
               Expanded(
@@ -283,7 +296,6 @@ class _StockScreenState extends State<StockScreen> {
                             DataColumn(label: Text('Tanggal Transaksi', style: TextStyle(fontWeight: FontWeight.bold))),
                             DataColumn(label: Text('Jenis Transaksi', style: TextStyle(fontWeight: FontWeight.bold))),
                             DataColumn(label: Text('Jumlah (Kg)', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('Sumber/Tujuan', style: TextStyle(fontWeight: FontWeight.bold))), // Optional detail
                           ],
                           rows: _stockData!.transactions.map((transaction) {
                             final isIncoming = transaction.type == 'in';
@@ -309,7 +321,6 @@ class _StockScreenState extends State<StockScreen> {
                                   ),
                                 ),
                                 DataCell(Text('${transaction.quantity} kg', style: const TextStyle(fontWeight: FontWeight.bold))),
-                                const DataCell(Text('-')), // placeholder
                               ],
                             );
                           }).toList(),

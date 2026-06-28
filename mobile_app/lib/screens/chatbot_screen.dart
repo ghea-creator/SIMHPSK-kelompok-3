@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_sidebar.dart';
+import '../widgets/app_theme.dart';
+import '../utils/navigation_helper.dart';
+import '../login_screen.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -81,70 +88,111 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FBF9),
-      appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'TaniBot',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Text(
-              'Asisten AI Pertanian Kentang',
-              style: TextStyle(fontSize: 11, color: Colors.white70),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1A7A4A),
-        foregroundColor: Colors.white,
-        elevation: 0,
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Keluar'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
-          if (_messages.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep_outlined),
-              tooltip: 'Bersihkan Chat',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Bersihkan Percakapan'),
-                    content: const Text('Apakah Anda yakin ingin menghapus semua pesan di riwayat chat ini?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Batal'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _messages.clear();
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Bersihkan', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () async {
+              final nav = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              nav.pop();
+              await auth.logout();
+              nav.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (_) => false,
+              );
+            },
+            child: const Text('Keluar', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: _messages.isEmpty ? _buildWelcomeView() : _buildChatList(),
-            ),
-            if (_isTyping) _buildTypingIndicator(),
-            _buildInputArea(),
-          ],
-        ),
-      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    final name = user?.name ?? 'Petani';
+    final email = user?.email ?? '';
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'P';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        return Scaffold(
+          backgroundColor: AppTheme.pageBg,
+          appBar: isDesktop
+              ? null
+              : AppMobileAppBar(
+                  title: 'TaniBot AI',
+                  userInitials: initials,
+                ),
+          drawer: isDesktop
+              ? null
+              : AppDrawer(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: NavigationHelper.buildNavItems(context, 'chatbot'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'chatbot'),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                AppSidebar(
+                  userName: name,
+                  userEmail: email,
+                  userInitials: initials,
+                  onLogout: () => _showLogoutDialog(context),
+                  navItems: NavigationHelper.buildNavItems(context, 'chatbot'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'chatbot'),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (isDesktop)
+                      AppHeader(
+                        title: 'TaniBot AI',
+                        subtitle: 'Asisten cerdas kecerdasan buatan untuk seputar pertanian kentang',
+                        userInitials: initials,
+                        actions: [
+                          if (_messages.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(Icons.delete_sweep_outlined),
+                              tooltip: 'Bersihkan Chat',
+                              onPressed: () {
+                                setState(() => _messages.clear());
+                              },
+                            ),
+                        ],
+                      ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: _messages.isEmpty ? _buildWelcomeView() : _buildChatList(),
+                          ),
+                          if (_isTyping) _buildTypingIndicator(),
+                          _buildInputArea(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -154,50 +202,33 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Elegant Icon Card
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A7A4A).withValues(alpha: 0.1),
+              color: AppTheme.green500.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Text(
-              '🌾',
-              style: TextStyle(fontSize: 50),
-            ),
+            child: const Text('🌾', style: TextStyle(fontSize: 50)),
           ),
           const SizedBox(height: 24),
           const Text(
             'Halo! Saya TaniBot 👋',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF135835),
-            ),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.green700),
           ),
           const SizedBox(height: 12),
           const Text(
             'Asisten pintar Anda untuk manajemen hasil panen, stok gudang, penjualan, dan budidaya kentang. Silakan tanyakan apa saja kepada saya!',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 36),
-          // Suggested Questions Section
           const Row(
             children: [
-              Icon(Icons.tips_and_updates_outlined, color: Color(0xFF27AE60), size: 20),
+              Icon(Icons.tips_and_updates_outlined, color: AppTheme.green500, size: 20),
               SizedBox(width: 8),
               Text(
                 'Pertanyaan Rekomendasi:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF27AE60),
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.green700),
               ),
             ],
           ),
@@ -218,32 +249,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      border: Border.all(color: AppTheme.cardBorder),
+                      boxShadow: AppTheme.cardShadow,
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
                             question,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
                           ),
                         ),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: Color(0xFF27AE60),
-                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.green500),
                       ],
                     ),
                   ),
@@ -282,40 +299,31 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A7A4A).withValues(alpha: 0.1),
+                color: AppTheme.green500.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: const Text(
-                '🌾',
-                style: TextStyle(fontSize: 16),
-              ),
+              child: const Text('🌾', style: TextStyle(fontSize: 16)),
             ),
           ],
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               decoration: BoxDecoration(
-                color: isUser ? const Color(0xFF27AE60) : Colors.white,
+                color: isUser ? AppTheme.green700 : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
                   bottomLeft: Radius.circular(isUser ? 16 : 4),
                   bottomRight: Radius.circular(isUser ? 4 : 16),
                 ),
-                border: isUser ? null : Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: isUser ? null : Border.all(color: AppTheme.cardBorder),
+                boxShadow: AppTheme.cardShadow,
               ),
               child: Text(
                 text,
                 style: TextStyle(
-                  color: isUser ? Colors.white : Colors.black87,
+                  color: isUser ? Colors.white : AppTheme.textPrimary,
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -338,14 +346,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFF1A7A4A).withValues(alpha: 0.1),
+              color: AppTheme.green500.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: const Text(
-              '🌾',
-              style: TextStyle(fontSize: 16),
-            ),
+            child: const Text('🌾', style: TextStyle(fontSize: 16)),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -357,7 +362,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 bottomLeft: Radius.circular(4),
                 bottomRight: Radius.circular(16),
               ),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: AppTheme.cardBorder),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -384,20 +389,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        border: const Border(top: BorderSide(color: AppTheme.cardBorder)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F4F0),
+                color: AppTheme.pageBg,
                 borderRadius: BorderRadius.circular(24.0),
               ),
               child: TextField(
@@ -407,7 +406,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   hintText: 'Tanya sesuatu ke TaniBot...',
-                  hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
+                  hintStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                   contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
                   border: InputBorder.none,
                 ),
@@ -420,14 +419,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
-                color: Color(0xFF1A7A4A),
+                color: AppTheme.green700,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.send_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
+              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -487,7 +482,7 @@ class _DotAnimationState extends State<_DotAnimation> with SingleTickerProviderS
             width: 6,
             height: 6,
             decoration: const BoxDecoration(
-              color: Colors.grey,
+              color: AppTheme.textSecondary,
               shape: BoxShape.circle,
             ),
           ),

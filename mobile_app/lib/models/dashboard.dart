@@ -3,18 +3,30 @@ class DashboardData {
   final int totalPenjualan;
   final int totalBiaya;
   final int targetPanen;
+  final int minStock;
+  final int maxStock;
+  final bool notifyLowStock;
+  final bool notifyNewSale;
+  final bool notifyCost;
   final List<HarvestSummary> harvests;
   final List<TransactionSummary> transactions;
   final ProfitLoss profitLoss;
+  final List<MonthlyStat> monthlyStats;
 
   DashboardData({
     required this.totalStok,
     required this.totalPenjualan,
     required this.totalBiaya,
     required this.targetPanen,
+    required this.minStock,
+    required this.maxStock,
+    required this.notifyLowStock,
+    required this.notifyNewSale,
+    required this.notifyCost,
     required this.harvests,
     required this.transactions,
     required this.profitLoss,
+    required this.monthlyStats,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
@@ -23,6 +35,11 @@ class DashboardData {
       totalPenjualan: json['totalPenjualan'] as int? ?? 0,
       totalBiaya: json['totalBiaya'] as int? ?? 0,
       targetPanen: json['targetPanen'] as int? ?? 0,
+      minStock: json['minStock'] as int? ?? 100,
+      maxStock: json['maxStock'] as int? ?? 5000,
+      notifyLowStock: json['notifyLowStock'] as bool? ?? true,
+      notifyNewSale: json['notifyNewSale'] as bool? ?? true,
+      notifyCost: json['notifyCost'] as bool? ?? true,
       harvests: (json['harvests'] as List?)
               ?.map((e) => HarvestSummary.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -32,6 +49,30 @@ class DashboardData {
               .toList() ??
           [],
       profitLoss: ProfitLoss.fromJson(json['profitLoss'] as Map<String, dynamic>? ?? {}),
+      monthlyStats: (json['monthlyStats'] as List?)
+              ?.map((e) => MonthlyStat.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class MonthlyStat {
+  final String label;
+  final double harvest;
+  final double sales;
+
+  MonthlyStat({
+    required this.label,
+    required this.harvest,
+    required this.sales,
+  });
+
+  factory MonthlyStat.fromJson(Map<String, dynamic> json) {
+    return MonthlyStat(
+      label: json['label'] as String? ?? '',
+      harvest: (json['harvest'] as num?)?.toDouble() ?? 0.0,
+      sales: (json['sales'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

@@ -14,7 +14,6 @@ import 'sales_screen.dart';
 import 'costs_screen.dart';
 import 'reports_screen.dart';
 import 'settings_screen.dart';
-import 'feedback_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

@@ -21,106 +21,254 @@ class WelcomeBanner extends StatelessWidget {
     final now = DateTime.now();
     final dateStr = DateFormat('d MMMM yyyy', 'id').format(now);
     final hour = now.hour;
-    final greeting = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
+    final greeting = hour < 11
+        ? 'Selamat Pagi'
+        : hour < 15
+        ? 'Selamat Siang'
+        : hour < 18
+        ? 'Selamat Sore'
+        : 'Selamat Malam';
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: AppTheme.bannerGradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: AppTheme.card,
-        boxShadow: AppTheme.floatShadow,
-      ),
-      child: Stack(
-        children: [
-          // Background decorative circles
-          Positioned(
-            right: -20, top: -20,
-            child: Container(
-              width: 120, height: 120,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
-                shape: BoxShape.circle,
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 520;
+        return Container(
+          padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: AppTheme.bannerGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: AppTheme.card,
+            boxShadow: AppTheme.floatShadow,
           ),
-          Positioned(
-            right: 40, bottom: -30,
-            child: Container(
-              width: 80, height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          // Content
-          Row(
+          child: Stack(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Greeting chip
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: AppTheme.chip,
-                      ),
-                      child: Text('$greeting 👋',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(userName,
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.3),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
+              // Background decorative circles
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 40,
+                bottom: -30,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.04),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              // Content
+              isNarrow
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.calendar_today_outlined, size: 13, color: Color(0xFFB7DFC8)),
-                        const SizedBox(width: 5),
-                        Text(seasonLabel ?? 'Musim 1 · $dateStr',
-                          style: const TextStyle(color: Color(0xFFB7DFC8), fontSize: 13),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: AppTheme.chip,
+                          ),
+                          child: Text(
+                            '$greeting 👋',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 13,
+                              color: Color(0xFFB7DFC8),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                seasonLabel ?? 'Musim 1 · $dateStr',
+                                style: const TextStyle(
+                                  color: Color(0xFFB7DFC8),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (farmName != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 13,
+                                color: Color(0xFFB7DFC8),
+                              ),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  farmName!,
+                                  style: const TextStyle(
+                                    color: Color(0xFFB7DFC8),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.eco_rounded,
+                                color: Colors.white,
+                                size: 36,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: AppTheme.chip,
+                                ),
+                                child: Text(
+                                  '$greeting 👋',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                userName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 13,
+                                    color: Color(0xFFB7DFC8),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    seasonLabel ?? 'Musim 1 · $dateStr',
+                                    style: const TextStyle(
+                                      color: Color(0xFFB7DFC8),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (farmName != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 13,
+                                      color: Color(0xFFB7DFC8),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      farmName!,
+                                      style: const TextStyle(
+                                        color: Color(0xFFB7DFC8),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.eco_rounded,
+                              color: Colors.white,
+                              size: 36,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    if (farmName != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_outlined, size: 13, color: Color(0xFFB7DFC8)),
-                          const SizedBox(width: 5),
-                          Text(farmName!,
-                            style: const TextStyle(color: Color(0xFFB7DFC8), fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              // Eco icon box with glass effect
-              ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  width: 70, height: 70,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  child: const Icon(Icons.eco_rounded, color: Colors.white, size: 36),
-                ),
-              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -164,13 +312,22 @@ class AlertBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(message,
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: textColor),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: textColor,
+                  ),
                 ),
                 if (detail != null) ...[
                   const SizedBox(height: 3),
-                  Text(detail!,
-                    style: TextStyle(fontSize: 12.5, color: textColor.withValues(alpha: 0.8)),
+                  Text(
+                    detail!,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: textColor.withValues(alpha: 0.8),
+                    ),
                   ),
                 ],
               ],
@@ -215,15 +372,12 @@ class SectionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title, style: AppTheme.h3),
-                ?headerAction,
+                if (headerAction != null) headerAction!,
               ],
             ),
           ),
           const Divider(height: 1, color: AppTheme.cardBorder),
-          Padding(
-            padding: padding ?? const EdgeInsets.all(20),
-            child: child,
-          ),
+          Padding(padding: padding ?? const EdgeInsets.all(20), child: child),
         ],
       ),
     );

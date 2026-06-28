@@ -1578,7 +1578,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
             child: Column(
               children: [
                 const Text(
-                  'Dipercaya Petani di Seluruh Jawa Tengah',
+                  'Dipercaya Petani di Seluruh Indonesia',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Nunito',
@@ -1939,7 +1939,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                     ),
                   ),
                   child: const Text(
-                    '🚀 Cara Kerja',
+                    'Cara Kerja',
                     style: TextStyle(
                       color: Color(0xFF74C69D),
                       fontWeight: FontWeight.bold,
@@ -2375,7 +2375,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '🚀 Daftar Sekarang — Gratis',
+                            'Daftar Sekarang — Gratis',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(width: 8),
@@ -2633,42 +2633,42 @@ class _AnimatedWavePainter extends CustomPainter {
       if (!isLayer2) {
         // Gs Wave 1 animated Bezier
         final y0 = (60.0 + waveAmp * _sin(phase)) * h;
-        final y1_c1 = (20.0 + waveAmp * _sin(phase + 1.0)) * h;
-        final y1_c2 = (100.0 + waveAmp * _sin(phase + 2.0)) * h;
-        final y1_end = (60.0 + waveAmp * _sin(phase + 3.0)) * h;
+        final y1C1 = (20.0 + waveAmp * _sin(phase + 1.0)) * h;
+        final y1C2 = (100.0 + waveAmp * _sin(phase + 2.0)) * h;
+        final y1End = (60.0 + waveAmp * _sin(phase + 3.0)) * h;
 
-        final y2_c1 = (20.0 + waveAmp * _sin(phase + 4.0)) * h;
-        final y2_c2 = (100.0 + waveAmp * _sin(phase + 5.0)) * h;
-        final y2_end = (60.0 + waveAmp * _sin(phase + 0.5)) * h;
+        final y2C1 = (20.0 + waveAmp * _sin(phase + 4.0)) * h;
+        final y2C2 = (100.0 + waveAmp * _sin(phase + 5.0)) * h;
+        final y2End = (60.0 + waveAmp * _sin(phase + 0.5)) * h;
 
-        final y3_c1 = (20.0 + waveAmp * _sin(phase + 1.5)) * h;
-        final y3_c2 = (100.0 + waveAmp * _sin(phase + 2.5)) * h;
-        final y3_end = (60.0 + waveAmp * _sin(phase + 3.5)) * h;
+        final y3C1 = (20.0 + waveAmp * _sin(phase + 1.5)) * h;
+        final y3C2 = (100.0 + waveAmp * _sin(phase + 2.5)) * h;
+        final y3End = (60.0 + waveAmp * _sin(phase + 3.5)) * h;
 
         path.moveTo(0, y0);
-        path.cubicTo(180 * w, y1_c1, 360 * w, y1_c2, 540 * w, y1_end);
-        path.cubicTo(720 * w, y2_c1, 900 * w, y2_c2, 1080 * w, y2_end);
-        path.cubicTo(1260 * w, y3_c1, 1440 * w, y3_c2, size.width, y3_end);
+        path.cubicTo(180 * w, y1C1, 360 * w, y1C2, 540 * w, y1End);
+        path.cubicTo(720 * w, y2C1, 900 * w, y2C2, 1080 * w, y2End);
+        path.cubicTo(1260 * w, y3C1, 1440 * w, y3C2, size.width, y3End);
       } else {
         // Gs Wave 2 animated Bezier
         final y0 = (70.0 + waveAmp * _sin(phase + 1.5)) * h;
-        final y1_c1 = (30.0 + waveAmp * _sin(phase + 2.5)) * h;
-        final y1_c2 = (110.0 + waveAmp * _sin(phase + 3.5)) * h;
-        final y1_end = (70.0 + waveAmp * _sin(phase + 0.5)) * h;
+        final y1C1 = (30.0 + waveAmp * _sin(phase + 2.5)) * h;
+        final y1C2 = (110.0 + waveAmp * _sin(phase + 3.5)) * h;
+        final y1End = (70.0 + waveAmp * _sin(phase + 0.5)) * h;
 
-        final y2_c1 = (30.0 + waveAmp * _sin(phase + 1.2)) * h;
-        final y2_c2 = (110.0 + waveAmp * _sin(phase + 2.2)) * h;
-        final y2_end = (70.0 + waveAmp * _sin(phase + 3.2)) * h;
+        final y2C1 = (30.0 + waveAmp * _sin(phase + 1.2)) * h;
+        final y2C2 = (110.0 + waveAmp * _sin(phase + 2.2)) * h;
+        final y2End = (70.0 + waveAmp * _sin(phase + 3.2)) * h;
 
-        final y3_c1 = (30.0 + waveAmp * _sin(phase + 0.2)) * h;
-        final y3_c2 = (110.0 + waveAmp * _sin(phase + 1.2)) * h;
-        final y3_end = (70.0 + waveAmp * _sin(phase + 2.2)) * h;
+        final y3C1 = (30.0 + waveAmp * _sin(phase + 0.2)) * h;
+        final y3C2 = (110.0 + waveAmp * _sin(phase + 1.2)) * h;
+        final y3End = (70.0 + waveAmp * _sin(phase + 2.2)) * h;
 
         path.moveTo(0, y0);
-        path.cubicTo(120 * w, y1_c1, 240 * w, y1_c2, 360 * w, y1_end);
-        path.cubicTo(480 * w, y2_c1, 600 * w, y2_c2, 720 * w, y2_end);
-        path.cubicTo(840 * w, y3_c1, 960 * w, y3_c2, 1080 * w, y3_end);
-        path.cubicTo(1200 * w, y1_c1, 1320 * w, y1_c2, size.width, y1_end);
+        path.cubicTo(120 * w, y1C1, 240 * w, y1C2, 360 * w, y1End);
+        path.cubicTo(480 * w, y2C1, 600 * w, y2C2, 720 * w, y2End);
+        path.cubicTo(840 * w, y3C1, 960 * w, y3C2, 1080 * w, y3End);
+        path.cubicTo(1200 * w, y1C1, 1320 * w, y1C2, size.width, y1End);
       }
       path.lineTo(size.width, size.height);
       path.lineTo(0, size.height);
@@ -2677,42 +2677,42 @@ class _AnimatedWavePainter extends CustomPainter {
       if (!isLayer2) {
         // Ly Wave 1 animated Bezier
         final y0 = (60.0 + waveAmp * _sin(phase)) * h;
-        final y1_c1 = (100.0 + waveAmp * _sin(phase + 1.0)) * h;
-        final y1_c2 = (20.0 + waveAmp * _sin(phase + 2.0)) * h;
-        final y1_end = (60.0 + waveAmp * _sin(phase + 3.0)) * h;
+        final y1C1 = (100.0 + waveAmp * _sin(phase + 1.0)) * h;
+        final y1C2 = (20.0 + waveAmp * _sin(phase + 2.0)) * h;
+        final y1End = (60.0 + waveAmp * _sin(phase + 3.0)) * h;
 
-        final y2_c1 = (100.0 + waveAmp * _sin(phase + 4.0)) * h;
-        final y2_c2 = (20.0 + waveAmp * _sin(phase + 5.0)) * h;
-        final y2_end = (60.0 + waveAmp * _sin(phase + 0.5)) * h;
+        final y2C1 = (100.0 + waveAmp * _sin(phase + 4.0)) * h;
+        final y2C2 = (20.0 + waveAmp * _sin(phase + 5.0)) * h;
+        final y2End = (60.0 + waveAmp * _sin(phase + 0.5)) * h;
 
-        final y3_c1 = (100.0 + waveAmp * _sin(phase + 1.5)) * h;
-        final y3_c2 = (20.0 + waveAmp * _sin(phase + 2.5)) * h;
-        final y3_end = (60.0 + waveAmp * _sin(phase + 3.5)) * h;
+        final y3C1 = (100.0 + waveAmp * _sin(phase + 1.5)) * h;
+        final y3C2 = (20.0 + waveAmp * _sin(phase + 2.5)) * h;
+        final y3End = (60.0 + waveAmp * _sin(phase + 3.5)) * h;
 
         path.moveTo(0, y0);
-        path.cubicTo(180 * w, y1_c1, 360 * w, y1_c2, 540 * w, y1_end);
-        path.cubicTo(720 * w, y2_c1, 900 * w, y2_c2, 1080 * w, y2_end);
-        path.cubicTo(1260 * w, y3_c1, 1440 * w, y3_c2, size.width, y3_end);
+        path.cubicTo(180 * w, y1C1, 360 * w, y1C2, 540 * w, y1End);
+        path.cubicTo(720 * w, y2C1, 900 * w, y2C2, 1080 * w, y2End);
+        path.cubicTo(1260 * w, y3C1, 1440 * w, y3C2, size.width, y3End);
       } else {
         // Ly Wave 2 animated Bezier
         final y0 = (70.0 + waveAmp * _sin(phase + 1.5)) * h;
-        final y1_c1 = (110.0 + waveAmp * _sin(phase + 2.5)) * h;
-        final y1_c2 = (30.0 + waveAmp * _sin(phase + 3.5)) * h;
-        final y1_end = (70.0 + waveAmp * _sin(phase + 0.5)) * h;
+        final y1C1 = (110.0 + waveAmp * _sin(phase + 2.5)) * h;
+        final y1C2 = (30.0 + waveAmp * _sin(phase + 3.5)) * h;
+        final y1End = (70.0 + waveAmp * _sin(phase + 0.5)) * h;
 
-        final y2_c1 = (110.0 + waveAmp * _sin(phase + 1.2)) * h;
-        final y2_c2 = (30.0 + waveAmp * _sin(phase + 2.2)) * h;
-        final y2_end = (70.0 + waveAmp * _sin(phase + 3.2)) * h;
+        final y2C1 = (110.0 + waveAmp * _sin(phase + 1.2)) * h;
+        final y2C2 = (30.0 + waveAmp * _sin(phase + 2.2)) * h;
+        final y2End = (70.0 + waveAmp * _sin(phase + 3.2)) * h;
 
-        final y3_c1 = (110.0 + waveAmp * _sin(phase + 0.2)) * h;
-        final y3_c2 = (30.0 + waveAmp * _sin(phase + 1.2)) * h;
-        final y3_end = (70.0 + waveAmp * _sin(phase + 2.2)) * h;
+        final y3C1 = (110.0 + waveAmp * _sin(phase + 0.2)) * h;
+        final y3C2 = (30.0 + waveAmp * _sin(phase + 1.2)) * h;
+        final y3End = (70.0 + waveAmp * _sin(phase + 2.2)) * h;
 
         path.moveTo(0, y0);
-        path.cubicTo(120 * w, y1_c1, 240 * w, y1_c2, 360 * w, y1_end);
-        path.cubicTo(480 * w, y2_c1, 600 * w, y2_c2, 720 * w, y2_end);
-        path.cubicTo(840 * w, y3_c1, 960 * w, y3_c2, 1080 * w, y3_end);
-        path.cubicTo(1200 * w, y1_c1, 1320 * w, y1_c2, size.width, y1_end);
+        path.cubicTo(120 * w, y1C1, 240 * w, y1C2, 360 * w, y1End);
+        path.cubicTo(480 * w, y2C1, 600 * w, y2C2, 720 * w, y2End);
+        path.cubicTo(840 * w, y3C1, 960 * w, y3C2, 1080 * w, y3End);
+        path.cubicTo(1200 * w, y1C1, 1320 * w, y1C2, size.width, y1End);
       }
       path.lineTo(size.width, 0);
       path.lineTo(0, 0);
