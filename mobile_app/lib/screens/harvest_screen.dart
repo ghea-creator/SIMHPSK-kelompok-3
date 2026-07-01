@@ -8,19 +8,7 @@ import '../widgets/app_header.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
-<<<<<<< HEAD
-import 'home_screen.dart';
-import 'season_screen.dart';
-import 'stock_screen.dart';
-import 'sales_screen.dart';
-import 'costs_screen.dart';
-import 'reports_screen.dart';
-import 'profile_screen.dart';
-import 'settings_screen.dart';
-import 'feedback_screen.dart';
-=======
 import '../utils/navigation_helper.dart';
->>>>>>> 26f6ebf (update ui menu user terbaru)
 import 'add_edit_harvest_screen.dart';
 
 class HarvestScreen extends StatefulWidget {
@@ -79,11 +67,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
           appBar: isDesktop
               ? null
               : AppMobileAppBar(
-<<<<<<< HEAD
-                  title: 'Data Panen',
-=======
                   title: 'Pencatatan Panen',
->>>>>>> 26f6ebf (update ui menu user terbaru)
                   userInitials: initials,
                   onNotificationTap: _loadHarvests,
                 ),
@@ -94,13 +78,9 @@ class _HarvestScreenState extends State<HarvestScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
-<<<<<<< HEAD
-                  navItems: _buildNavItems(context),
-=======
                   navItems: NavigationHelper.buildNavItems(context, 'harvest'),
                   secondaryItems:
                       NavigationHelper.buildSecondaryNavItems(context, 'harvest'),
->>>>>>> 26f6ebf (update ui menu user terbaru)
                 ),
           body: Row(
             children: [
@@ -110,46 +90,22 @@ class _HarvestScreenState extends State<HarvestScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
-<<<<<<< HEAD
-                  navItems: _buildNavItems(context),
-=======
                   navItems: NavigationHelper.buildNavItems(context, 'harvest'),
                   secondaryItems:
                       NavigationHelper.buildSecondaryNavItems(context, 'harvest'),
->>>>>>> 26f6ebf (update ui menu user terbaru)
                 ),
               Expanded(
                 child: Column(
                   children: [
                     if (isDesktop)
                       AppHeader(
-<<<<<<< HEAD
-                        title: 'Data Panen',
-=======
                         title: 'Pencatatan Panen',
->>>>>>> 26f6ebf (update ui menu user terbaru)
                         subtitle: 'Pantau hasil panen kelompok tani',
                         userInitials: initials,
                         onRefresh: _loadHarvests,
                       ),
                     Expanded(
                       child: _isLoading
-<<<<<<< HEAD
-                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
-                          : RefreshIndicator(
-                              onRefresh: _loadHarvests,
-                              color: AppTheme.green700,
-                              child: _harvests.isEmpty
-                                  ? _buildEmptyState()
-                                  : LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        if (constraints.maxWidth > 800) {
-                                          return _buildDesktopLayout();
-                                        }
-                                        return _buildMobileLayout();
-                                      },
-                                    ),
-=======
                           ? const Center(
                               child: CircularProgressIndicator(
                                   color: AppTheme.green700))
@@ -164,7 +120,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                   return _buildMobileLayout();
                                 },
                               ),
->>>>>>> 26f6ebf (update ui menu user terbaru)
                             ),
                     ),
                   ],
@@ -172,103 +127,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
               ),
             ],
           ),
-<<<<<<< HEAD
-          floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.green700,
-            foregroundColor: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddEditHarvestScreen(
-                    onSaved: _loadHarvests,
-                  ),
-                ),
-              ).then((_) => _loadHarvests());
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Tambah Panen', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        );
-      },
-    );
-  }
-
-  List<SidebarNavItem> _buildNavItems(BuildContext context) {
-    return [
-      SidebarNavItem(
-        icon: Icons.grid_view_rounded,
-        label: 'Dashboard',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.calendar_month_outlined,
-        label: 'Musim Tanam',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.agriculture_outlined,
-        label: 'Pencatatan Panen',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.inventory_2_outlined,
-        label: 'Stok Gudang',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.shopping_cart_outlined,
-        label: 'Penjualan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.attach_money_rounded,
-        label: 'Biaya Produksi',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.bar_chart_rounded,
-        label: 'Laporan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.person,
-        label: 'Profil',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.settings,
-        label: 'Pengaturan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-      ),
-    ];
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          TextButton(
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              final auth = context.read<AuthProvider>();
-              navigator.pop();
-              await auth.logout();
-              navigator.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-=======
           floatingActionButton: LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth > 800) return const SizedBox.shrink();
@@ -292,7 +150,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
           ),
         );
       },
->>>>>>> 26f6ebf (update ui menu user terbaru)
     );
   }
 

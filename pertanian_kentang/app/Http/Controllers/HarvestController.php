@@ -7,6 +7,7 @@ use App\Models\Season;
 use App\Models\StockTransaction;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class HarvestController extends Controller
@@ -83,6 +84,7 @@ class HarvestController extends Controller
             'quantity'     => 'nullable|integer|min:0',
             'weight_kg'    => 'required|numeric|min:0.01',
             'notes'        => 'nullable|string|max:1000',
+            'photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             'status'       => 'nullable|in:recorded,verified,cancelled',
         ], [
             'season_id.required' => 'Musim tanam harus dipilih.',
@@ -110,6 +112,11 @@ class HarvestController extends Controller
             'status' => isset($validated['status']) && in_array($validated['status'], ['recorded', 'verified', 'cancelled']) ? $validated['status'] : 'recorded',
         ];
 
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('harvest_photos', 'public');
+            $dbData['photo'] = 'storage/' . $photoPath;
+        }
+
         $harvest = Harvest::create($dbData);
 
         StockTransaction::addTransaction('in', $dbData['weight_kg'], 'Panen masuk', 'harvest_' . $harvest->id, $request->user()->id);
@@ -123,6 +130,7 @@ class HarvestController extends Controller
             'quantity' => (int)($harvest->quantity ?? 0),
             'status' => $harvest->status,
             'notes' => $harvest->notes ?? '',
+            'photo' => $harvest->photo ?? '',
             'created_at' => $harvest->created_at->toIso8601String(),
         ], 'Pencatatan panen berhasil ditambahkan.', 201);
     }
@@ -156,6 +164,7 @@ class HarvestController extends Controller
             'quantity'     => 'nullable|integer|min:0',
             'weight_kg'    => 'sometimes|required|numeric|min:0.01',
             'notes'        => 'nullable|string|max:1000',
+            'photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             'status'       => 'nullable|in:recorded,verified,cancelled',
         ], [
             'season_id.required' => 'Musim tanam harus dipilih.',
@@ -189,6 +198,14 @@ class HarvestController extends Controller
             $dbData['status'] = in_array($validated['status'], ['recorded', 'verified', 'cancelled']) ? $validated['status'] : $harvest->status;
         }
 
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('harvest_photos', 'public');
+            $dbData['photo'] = 'storage/' . $photoPath;
+            if (!empty($harvest->photo) && str_starts_with($harvest->photo, 'storage/')) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $harvest->photo));
+            }
+        }
+
         $oldWeight = $harvest->weight_kg;
         $harvest->update($dbData);
 
@@ -214,6 +231,7 @@ class HarvestController extends Controller
             'quantity' => (int)($harvest->quantity ?? 0),
             'status' => $harvest->status,
             'notes' => $harvest->notes ?? '',
+            'photo' => $harvest->photo ?? '',
             'updated_at' => $harvest->updated_at->toIso8601String(),
         ], 'Pencatatan panen berhasil diperbarui.', 200);
     }

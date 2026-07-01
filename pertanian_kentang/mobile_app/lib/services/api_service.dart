@@ -1,5 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import '../api_config.dart';
 import '../models/user.dart';
 import '../models/dashboard.dart';
@@ -8,7 +10,6 @@ import '../models/stock.dart';
 import '../models/sale.dart';
 import '../models/season.dart';
 import '../models/cost.dart';
-import 'package:flutter/foundation.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -33,13 +34,15 @@ class ApiService {
     _authToken = null;
   }
 
-  Map<String, String> _getHeaders({bool includeAuth = true}) {
+  Map<String, String> _getHeaders({bool includeAuth = true, bool forMultipart = false}) {
     final headers = {
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Cache-Control': 'no-cache',
       'Pragma': 'no-cache',
     };
+    if (!forMultipart) {
+      headers['Content-Type'] = 'application/json';
+    }
     if (includeAuth && _authToken != null) {
       headers['Authorization'] = 'Bearer $_authToken';
     }
@@ -100,6 +103,26 @@ class ApiService {
     }
   }
 
+  // Translate raw Laravel validation messages to Indonesian
+  String _translateValidationMessage(String raw) {
+    if (raw.contains('validation.min.string') || raw.contains('min.string')) {
+      return 'Password minimal 8 karakter';
+    }
+    if (raw.contains('validation.confirmed') || raw.contains('confirmed')) {
+      return 'Konfirmasi password tidak cocok';
+    }
+    if (raw.contains('validation.unique') || raw.contains('unique')) {
+      return 'Email sudah terdaftar, gunakan email lain';
+    }
+    if (raw.contains('validation.email') || raw.contains('email')) {
+      return 'Format email tidak valid';
+    }
+    if (raw.contains('validation.required') || raw.contains('required')) {
+      return 'Semua field harus diisi';
+    }
+    return raw;
+  }
+
   Future<Map<String, dynamic>> register({
     required String farmName,
     required String name,
@@ -126,19 +149,21 @@ class ApiService {
 
       final data = jsonDecode(response.body);
       String message = data['message'] ?? 'Registrasi gagal';
-      
+
       if (data['errors'] != null && data['errors'] is Map) {
         final errors = data['errors'] as Map;
         final List<String> errorMessages = [];
         for (var key in errors.keys) {
           final value = errors[key];
           if (value is List && value.isNotEmpty) {
-            errorMessages.add(value.first.toString());
+            errorMessages.add(_translateValidationMessage(value.first.toString()));
           }
         }
         if (errorMessages.isNotEmpty) {
           message = errorMessages.join(', ');
         }
+      } else {
+        message = _translateValidationMessage(message);
       }
 
       return {
@@ -149,6 +174,7 @@ class ApiService {
       return {'success': false, 'message': 'Error: ${e.toString()}'};
     }
   }
+
 
   Future<void> logout() async {
     try {
@@ -486,23 +512,34 @@ class ApiService {
     required double weightKg,
     String? notes,
     String? status,
+    XFile? photoFile,
   }) async {
     try {
-      final response = await http
-          .post(
-            Uri.parse('${ApiConfig.baseUrl}/harvests'),
-            headers: _getHeaders(),
-            body: jsonEncode({
-              'season_id': seasonId,
-              'harvest_date': harvestDate,
-              'quantity': quantity,
-              'weight_kg': weightKg,
-              'notes': notes,
-              'status': status ?? 'recorded',
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
+      final uri = Uri.parse('${ApiConfig.baseUrl}/harvests');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(_getHeaders(forMultipart: true));
+      request.fields['season_id'] = seasonId.toString();
+      request.fields['harvest_date'] = harvestDate;
+      request.fields['quantity'] = quantity.toString();
+      request.fields['weight_kg'] = weightKg.toString();
+      if (notes != null) {
+        request.fields['notes'] = notes;
+      }
+      request.fields['status'] = status ?? 'recorded';
 
+      if (photoFile != null) {
+        final photoBytes = await photoFile.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'photo',
+            photoBytes,
+            filename: photoFile.name,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201 && data['success'] == true) {
@@ -527,24 +564,35 @@ class ApiService {
     double? weightKg,
     String? notes,
     String? status,
+    XFile? photoFile,
   }) async {
     try {
-      final body = <String, dynamic>{};
-      if (seasonId != null) body['season_id'] = seasonId;
-      if (harvestDate != null) body['harvest_date'] = harvestDate;
-      if (quantity != null) body['quantity'] = quantity;
-      if (weightKg != null) body['weight_kg'] = weightKg;
-      body['notes'] = notes;
-      if (status != null) body['status'] = status;
+      final uri = Uri.parse('${ApiConfig.baseUrl}/harvests/$id');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(_getHeaders(forMultipart: true));
+      request.fields['_method'] = 'PUT';
+      request.headers['X-HTTP-Method-Override'] = 'PUT';
 
-      final response = await http
-          .put(
-            Uri.parse('${ApiConfig.baseUrl}/harvests/$id'),
-            headers: _getHeaders(),
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 30));
+      if (seasonId != null) request.fields['season_id'] = seasonId.toString();
+      if (harvestDate != null) request.fields['harvest_date'] = harvestDate;
+      if (quantity != null) request.fields['quantity'] = quantity.toString();
+      if (weightKg != null) request.fields['weight_kg'] = weightKg.toString();
+      if (notes != null) request.fields['notes'] = notes;
+      if (status != null) request.fields['status'] = status;
 
+      if (photoFile != null) {
+        final photoBytes = await photoFile.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'photo',
+            photoBytes,
+            filename: photoFile.name,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
@@ -796,7 +844,7 @@ class ApiService {
 
   // ==================== NOTIFICATIONS ====================
 
-  Future<List<Map<String, dynamic>>> getNotifications() async {
+  Future<Map<String, dynamic>> getNotifications() async {
     try {
       final response = await http
           .get(
@@ -807,14 +855,42 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          // Expecting data['data'] is a list of notifications
-          return (data['data'] as List<dynamic>).map((e) => e as Map<String, dynamic>).toList();
+        if (data['success'] == true && data['data'] != null) {
+          final dataMap = data['data'] as Map<String, dynamic>;
+          final items = (dataMap['items'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ?? [];
+          final unreadCount = dataMap['unread_count'] as int? ??
+              items.where((item) => item['is_read'] == false).length;
+          return {
+            'items': items,
+            'unread_count': unreadCount,
+          };
         }
       }
-      return [];
+      return {'items': [], 'unread_count': 0};
     } catch (e) {
-      return [];
+      return {'items': [], 'unread_count': 0};
+    }
+  }
+
+  Future<bool> markNotificationsAsRead({int? notificationId}) async {
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/notifications/read');
+      final response = await http
+          .post(
+            uri,
+            headers: _getHeaders(),
+            body: jsonEncode({
+              'notification_id': ?notificationId,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+      return response.statusCode == 200 && data['success'] == true;
+    } catch (e) {
+      return false;
     }
   }
 

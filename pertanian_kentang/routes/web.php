@@ -114,6 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/settings/password', [SettingController::class, 'updatePassword'])->name('settings.password');
     Route::post('/settings/gudang', [SettingController::class, 'updateGudang'])->name('settings.gudang');
     Route::post('/settings/notifications', [SettingController::class, 'updateNotifications'])->name('settings.notifications');
+    Route::delete('/settings/account', [SettingController::class, 'deleteAccount'])->name('settings.account.delete');
 
     // Super Admin Routes
     Route::middleware('super-admin')->prefix('super-admin')->name('super-admin.')->group(function () {

@@ -882,7 +882,7 @@ class ApiService {
             uri,
             headers: _getHeaders(),
             body: jsonEncode({
-              if (notificationId != null) 'notification_id': notificationId,
+              'notification_id': ?notificationId,
             }),
           )
           .timeout(const Duration(seconds: 15));

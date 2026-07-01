@@ -36,7 +36,8 @@ class StockTransaction extends Model
     public static function addTransaction($type, $amount, $notes = null, $reference = null, $userId = null)
     {
         $userId = $userId ?? auth()->id();
-        $balance = self::getCurrentBalance($userId);
+        $oldBalance = self::getCurrentBalance($userId);
+        $balance = $oldBalance;
         
         if ($type === 'in') {
             $balance += $amount;
@@ -44,7 +45,7 @@ class StockTransaction extends Model
             $balance -= $amount;
         }
 
-        return self::create([
+        $transaction = self::create([
             'user_id' => $userId,
             'type' => $type,
             'amount' => $amount,
@@ -53,6 +54,35 @@ class StockTransaction extends Model
             'balance_after' => $balance,
             'date' => now(),
         ]);
+
+        self::triggerThresholdNotification($userId, $oldBalance, $balance);
+
+        return $transaction;
+    }
+
+    protected static function triggerThresholdNotification($userId, $oldBalance, $newBalance)
+    {
+        $minStock = (int) Setting::get('min_stock', 100);
+        $maxStock = (int) Setting::get('max_stock', 5000);
+        $notifyLowStock = (bool) Setting::get('notify_low_stock', 1);
+
+        if ($notifyLowStock && $oldBalance > $minStock && $newBalance <= $minStock) {
+            Notification::create([
+                'user_id' => $userId,
+                'type' => 'low_stock',
+                'title' => 'Stok rendah',
+                'message' => "Stok gudang saat ini $newBalance kg, telah berada di bawah batas minimum $minStock kg.",
+            ]);
+        }
+
+        if ($oldBalance < $maxStock && $newBalance >= $maxStock) {
+            Notification::create([
+                'user_id' => $userId,
+                'type' => 'high_stock',
+                'title' => 'Stok tinggi',
+                'message' => "Stok gudang saat ini $newBalance kg, telah mencapai batas maksimum $maxStock kg.",
+            ]);
+        }
     }
 
     public static function rebuildBalances($userId = null)
