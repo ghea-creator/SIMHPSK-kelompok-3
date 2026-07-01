@@ -9,20 +9,8 @@ import '../widgets/app_header.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
-<<<<<<< HEAD
-=======
 import '../utils/navigation_helper.dart';
->>>>>>> 26f6ebf (update ui menu user terbaru)
 import 'add_edit_cost_screen.dart';
-import 'home_screen.dart';
-import 'season_screen.dart';
-import 'harvest_screen.dart';
-import 'stock_screen.dart';
-import 'sales_screen.dart';
-import 'reports_screen.dart';
-import 'profile_screen.dart';
-import 'settings_screen.dart';
-import 'feedback_screen.dart';
 
 class CostsScreen extends StatefulWidget {
   const CostsScreen({super.key});
@@ -606,176 +594,12 @@ class _CostsScreenState extends State<CostsScreen> {
     return formatter.format(val);
   }
 
-<<<<<<< HEAD
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.read<AuthProvider>();
-    final user = auth.user;
-    final name = user?.name ?? 'Super Admin';
-    final email = user?.email ?? '';
-    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'S';
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 900;
-
-        return Scaffold(
-          backgroundColor: AppTheme.pageBg,
-          appBar: isDesktop
-              ? null
-              : AppMobileAppBar(
-                  title: 'Biaya Produksi',
-                  userInitials: initials,
-                  onNotificationTap: _loadData,
-                ),
-          drawer: isDesktop
-              ? null
-              : AppDrawer(
-                  userName: name,
-                  userEmail: email,
-                  userInitials: initials,
-                  onLogout: () => _showLogoutDialog(context),
-                  navItems: _buildNavItems(context),
-                ),
-          body: Row(
-            children: [
-              if (isDesktop)
-                AppSidebar(
-                  userName: name,
-                  userEmail: email,
-                  userInitials: initials,
-                  onLogout: () => _showLogoutDialog(context),
-                  navItems: _buildNavItems(context),
-                ),
-              Expanded(
-                child: Column(
-                  children: [
-                    if (isDesktop)
-                      AppHeader(
-                        title: 'Biaya Produksi',
-                        subtitle: 'Kelola data biaya produksi',
-                        userInitials: initials,
-                        onRefresh: _loadData,
-                      ),
-                    Expanded(
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
-                          : RefreshIndicator(
-                              onRefresh: _loadData,
-                              color: AppTheme.green700,
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  if (constraints.maxWidth > 800) {
-                                    return _buildDesktopLayout();
-                                  }
-                                  return _buildMobileLayout();
-                                },
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () async {
-              final added = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEditCostScreen()));
-              if (added == true) _loadData();
-            },
-            backgroundColor: AppTheme.green700,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Tambah Biaya', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        );
-      },
-    );
-  }
-
-  List<SidebarNavItem> _buildNavItems(BuildContext context) {
-    return [
-      SidebarNavItem(
-        icon: Icons.grid_view_rounded,
-        label: 'Dashboard',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.calendar_month_outlined,
-        label: 'Musim Tanam',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.agriculture_outlined,
-        label: 'Pencatatan Panen',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.inventory_2_outlined,
-        label: 'Stok Gudang',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.shopping_cart_outlined,
-        label: 'Penjualan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.attach_money_rounded,
-        label: 'Biaya Produksi',
-        isActive: true,
-        onTap: () {},
-      ),
-      SidebarNavItem(
-        icon: Icons.bar_chart_rounded,
-        label: 'Laporan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.person,
-        label: 'Profil',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.settings,
-        label: 'Pengaturan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-      ),
-    ];
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          TextButton(
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              final auth = context.read<AuthProvider>();
-              navigator.pop();
-              await auth.logout();
-              navigator.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-=======
   String _formatJt(double value) {
     if (value >= 1000000) {
       final double result = value / 1000000;
       return 'Rp ${result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 1)} jt';
     }
     return _formatRp(value);
->>>>>>> 26f6ebf (update ui menu user terbaru)
   }
 
   Color _getCategoryColor(String cat) {

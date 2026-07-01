@@ -156,7 +156,6 @@
             <th>Tanggal</th>
             <th>Pembeli</th>
             <th>Musim Tanam</th>
-            <th class="text-right">Kuantitas (kg)</th>
             <th class="text-right">Harga/kg</th>
             <th class="text-right">Total</th>
         </tr>
@@ -165,16 +164,15 @@
         @foreach($sales as $i => $sale)
         <tr>
             <td class="text-center">{{ $i + 1 }}</td>
-            <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}</td>
+            <td>{{ \Carbon\Carbon::parse($sale->sale_date ?? $sale->date)->format('d M Y') }}</td>
             <td>{{ $sale->buyer_name }}</td>
             <td>{{ $sale->season->name ?? '-' }}</td>
-            <td class="text-right">{{ number_format($sale->quantity, 0, ',', '.') }}</td>
-            <td class="text-right">Rp {{ number_format($sale->price_per_unit, 0, ',', '.') }}</td>
+            <td class="text-right">Rp {{ number_format($sale->price_per_kg, 0, ',', '.') }}</td>
             <td class="text-right">Rp {{ number_format($sale->total, 0, ',', '.') }}</td>
         </tr>
         @endforeach
         <tr>
-            <td colspan="6" class="text-right"><strong>Total Pendapatan</strong></td>
+            <td colspan="5" class="text-right"><strong>Total Pendapatan</strong></td>
             <td class="text-right"><strong>Rp {{ number_format($totalRevenue, 0, ',', '.') }}</strong></td>
         </tr>
     </tbody>

@@ -372,7 +372,7 @@ class SectionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title, style: AppTheme.h3),
-                if (headerAction != null) headerAction!,
+                ?headerAction,
               ],
             ),
           ),

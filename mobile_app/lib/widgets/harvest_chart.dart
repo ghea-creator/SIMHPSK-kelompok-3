@@ -44,22 +44,6 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
     });
   }
 
-<<<<<<< HEAD
-  // Sample fallback data when real data is empty
-  List<ChartDataPoint> get _effectivePoints {
-    final pts = _points;
-    if (pts.isEmpty) {
-      return const [
-        ChartDataPoint(label: 'Jan', harvest: 1200, sales: 980),
-        ChartDataPoint(label: 'Feb', harvest: 1620, sales: 1380),
-        ChartDataPoint(label: 'Mar', harvest: 920, sales: 840),
-        ChartDataPoint(label: 'Apr', harvest: 1840, sales: 1660),
-        ChartDataPoint(label: 'Mei', harvest: 1380, sales: 1220),
-        ChartDataPoint(label: 'Jun', harvest: 2000, sales: 1820),
-      ];
-    }
-    return pts;
-=======
   List<ChartDataPoint> get _effectivePoints {
     return _points;
   }
@@ -67,16 +51,12 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
   bool get _hasData {
     if (_points.isEmpty) return false;
     return _points.any((p) => p.harvest > 0 || p.sales > 0);
->>>>>>> 26f6ebf (update ui menu user terbaru)
   }
 
   @override
   Widget build(BuildContext context) {
     final pts = _effectivePoints;
-<<<<<<< HEAD
-=======
     final hasData = _hasData;
->>>>>>> 26f6ebf (update ui menu user terbaru)
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,12 +69,8 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
             const Text('Grafik Panen & Penjualan',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
             ),
-<<<<<<< HEAD
-            _ToggleButtons(isArea: _isArea, onToggle: (v) => setState(() => _isArea = v)),
-=======
             if (hasData)
               _ToggleButtons(isArea: _isArea, onToggle: (v) => setState(() => _isArea = v)),
->>>>>>> 26f6ebf (update ui menu user terbaru)
           ],
         ),
         const SizedBox(height: 16),
@@ -103,8 +79,6 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
         SizedBox(
           height: 220,
           child: LayoutBuilder(builder: (context, box) {
-<<<<<<< HEAD
-=======
             if (!hasData) {
               return Center(
                 child: Column(
@@ -136,7 +110,6 @@ class _HarvestSalesChartState extends State<HarvestSalesChart> {
                 ),
               );
             }
->>>>>>> 26f6ebf (update ui menu user terbaru)
             return _isArea
                 ? _AreaChart(
                     points: pts,

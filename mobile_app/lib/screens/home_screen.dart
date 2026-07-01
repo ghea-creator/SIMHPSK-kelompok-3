@@ -1116,10 +1116,12 @@ class _HomeScreenState extends State<HomeScreen> {
       'Rp ${value.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}';
 
   String _formatCurrencyShort(int value) {
-    if (value.abs() >= 1000000000)
+    if (value.abs() >= 1000000000) {
       return 'Rp ${(value / 1000000000).toStringAsFixed(1)} M';
-    if (value.abs() >= 1000000)
+    }
+    if (value.abs() >= 1000000) {
       return 'Rp ${(value / 1000000).toStringAsFixed(1)} jt';
+    }
     return _formatCurrency(value);
   }
 

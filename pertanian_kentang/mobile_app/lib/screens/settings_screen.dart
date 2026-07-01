@@ -6,15 +6,16 @@ import '../widgets/app_header.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
-import 'home_screen.dart';
-import 'season_screen.dart';
-import 'harvest_screen.dart';
-import 'stock_screen.dart';
-import 'sales_screen.dart';
+import '../utils/navigation_helper.dart';
 import 'costs_screen.dart';
-import 'reports_screen.dart';
+import 'harvest_screen.dart';
+import 'home_screen.dart';
 import 'profile_screen.dart';
-import 'feedback_screen.dart';
+import 'reports_screen.dart';
+import 'sales_screen.dart';
+import 'season_screen.dart';
+import 'settings_screen.dart';
+import 'stock_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -302,7 +303,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
-                  navItems: _buildNavItems(context),
+                  navItems: NavigationHelper.buildNavItems(context, 'settings'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'settings'),
                 ),
           body: Row(
             children: [
@@ -312,7 +314,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userEmail: email,
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
-                  navItems: _buildNavItems(context),
+                  navItems: NavigationHelper.buildNavItems(context, 'settings'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'settings'),
                 ),
               Expanded(
                 child: Column(
@@ -394,37 +397,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SidebarNavItem(
         icon: Icons.grid_view_rounded,
         label: 'Dashboard',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen())),
       ),
       SidebarNavItem(
         icon: Icons.calendar_month_outlined,
         label: 'Musim Tanam',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SeasonScreen())),
       ),
       SidebarNavItem(
         icon: Icons.agriculture_outlined,
         label: 'Pencatatan Panen',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HarvestScreen())),
       ),
       SidebarNavItem(
         icon: Icons.inventory_2_outlined,
         label: 'Stok Gudang',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => StockScreen())),
       ),
       SidebarNavItem(
         icon: Icons.shopping_cart_outlined,
         label: 'Penjualan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SalesScreen())),
       ),
       SidebarNavItem(
         icon: Icons.attach_money_rounded,
         label: 'Biaya Produksi',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CostsScreen())),
       ),
       SidebarNavItem(
         icon: Icons.bar_chart_rounded,
         label: 'Laporan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ReportsScreen())),
       ),
       SidebarNavItem(
         icon: Icons.person,

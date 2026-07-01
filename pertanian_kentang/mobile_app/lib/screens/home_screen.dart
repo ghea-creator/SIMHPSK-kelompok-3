@@ -22,6 +22,7 @@ import 'feedback_screen.dart';
 import 'season_screen.dart';
 import 'super_admin_dashboard_screen.dart';
 import 'chatbot_screen.dart';
+import '../utils/navigation_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _customMenus = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _stockAlertShown = false;
 
   // Mobile bottom-nav index
   int _mobileNavIndex = 0;
@@ -49,22 +51,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadDashboard() async {
-    setState(() { _isLoading = true; _errorMessage = null; });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
-      final data  = await _apiService.getDashboard();
+      final data = await _apiService.getDashboard();
       final menus = await _apiService.getDashboardMenus();
       if (mounted) {
         setState(() {
           _dashboardData = data;
-          _customMenus = menus.where((m) => m['is_active'] == 1 || m['is_active'] == true).toList();
+          _customMenus = menus
+              .where((m) => m['is_active'] == 1 || m['is_active'] == true)
+              .toList();
           _isLoading = false;
         });
+
+        if (_dashboardData != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showStockThresholdAlert();
+            }
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
-        setState(() { _isLoading = false; _errorMessage = e.toString(); });
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat dashboard: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal memuat dashboard: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -73,30 +94,45 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _parseHexColor(String hexStr) {
     try {
       return Color(int.parse('FF${hexStr.replaceAll('#', '')}', radix: 16));
-    } catch (_) { return const Color(0xFF27AE60); }
+    } catch (_) {
+      return const Color(0xFF27AE60);
+    }
   }
 
   IconData _parseIcon(String iconName) {
     const map = {
-      'spa': Icons.spa, 'agriculture': Icons.agriculture, 'inventory': Icons.inventory,
-      'shopping_cart': Icons.shopping_cart, 'person': Icons.person, 'category': Icons.category,
-      'monetization_on': Icons.monetization_on, 'settings': Icons.settings, 'help': Icons.help,
+      'spa': Icons.spa,
+      'agriculture': Icons.agriculture,
+      'inventory': Icons.inventory,
+      'shopping_cart': Icons.shopping_cart,
+      'person': Icons.person,
+      'category': Icons.category,
+      'monetization_on': Icons.monetization_on,
+      'settings': Icons.settings,
+      'help': Icons.help,
     };
     return map[iconName] ?? Icons.widgets;
   }
 
   void _handleCustomMenuTap(BuildContext context, Map<String, dynamic> menu) {
     final url = (menu['url'] ?? '').toString().toLowerCase().trim();
-    void push(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s)).then((_) => _loadDashboard());
+    void push(Widget s) => Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => s),
+    ).then((_) => _loadDashboard());
     if (url.contains('cost') || url.contains('biaya')) {
       push(const CostsScreen());
-    } else if (url.contains('report') || url.contains('laporan') || url.contains('analis')) {
+    } else if (url.contains('report') ||
+        url.contains('laporan') ||
+        url.contains('analis')) {
       push(const ReportsScreen());
     } else if (url.contains('setting') || url.contains('pengaturan')) {
       push(const SettingsScreen());
     } else if (url.contains('harvest') || url.contains('panen')) {
       push(const HarvestScreen());
-    } else if (url.contains('stock') || url.contains('stok') || url.contains('gudang')) {
+    } else if (url.contains('stock') ||
+        url.contains('stok') ||
+        url.contains('gudang')) {
       push(const StockScreen());
     } else if (url.contains('sale') || url.contains('jual')) {
       push(const SalesScreen());
@@ -105,50 +141,93 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (url.contains('feedback') || url.contains('ulasan')) {
       push(const FeedbackScreen());
     } else if (url.contains('bot') || url.contains('chat')) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatbotScreen()),
+      );
     } else {
-      showDialog(context: context, builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(menu['title'] ?? '', style: const TextStyle(color: AppTheme.green700, fontWeight: FontWeight.bold)),
-        content: Text(menu['description'] ?? '', style: const TextStyle(fontSize: 14)),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
-      ));
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            menu['title'] ?? '',
+            style: const TextStyle(
+              color: AppTheme.green700,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            menu['description'] ?? '',
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tutup'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog(context: context, builder: (_) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text('Keluar'),
-      content: const Text('Apakah Anda yakin ingin keluar?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-        TextButton(
-          onPressed: () async {
-            final nav  = Navigator.of(context);
-            final auth = context.read<AuthProvider>();
-            nav.pop();
-            await auth.logout();
-            nav.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
-          },
-          child: const Text('Keluar', style: TextStyle(color: Colors.red)),
-        ),
-      ],
-    ));
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Keluar'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final nav = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              nav.pop();
+              await auth.logout();
+              nav.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (_) => false,
+              );
+            },
+            child: const Text('Keluar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   // ─── Routing ─────────────────────────────────────────────────────────────────
-  void _navTo(Widget screen) =>
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen)).then((_) => _loadDashboard());
+  void _navTo(Widget screen) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => screen),
+  ).then((_) => _loadDashboard());
 
   void _onMobileNavTap(int index) {
     setState(() => _mobileNavIndex = index);
     switch (index) {
-      case 1: _navTo(const HarvestScreen()); break;
-      case 2: _navTo(const StockScreen()); break;
-      case 3: _navTo(const SalesScreen()); break;
-      case 4: _navTo(const ReportsScreen()); break;
-      case 5: _showMobileMore(); break;
+      case 1:
+        _navTo(const HarvestScreen());
+        break;
+      case 2:
+        _navTo(const StockScreen());
+        break;
+      case 3:
+        _navTo(const SalesScreen());
+        break;
+      case 4:
+        _navTo(const ReportsScreen());
+        break;
+      case 5:
+        _showMobileMore();
+        break;
     }
   }
 
@@ -158,7 +237,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
-        if (isDesktop) { return _buildDesktop(context); }
+        if (isDesktop) {
+          return _buildDesktop(context);
+        }
         return _buildMobile(context);
       },
     );
@@ -170,8 +251,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildDesktop(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final name     = auth.user?.name ?? 'User';
-    final email    = auth.user?.email ?? '';
+    final name = auth.user?.name ?? 'User';
+    final email = auth.user?.email ?? '';
     final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     final now = DateTime.now();
     final dateStr = DateFormat('d MMM yyyy', 'id').format(now);
@@ -203,7 +284,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (auth.isImpersonating) _buildImpersonationBar(auth),
                 Expanded(
                   child: _isLoading
-                      ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.green700,
+                          ),
+                        )
                       : RefreshIndicator(
                           onRefresh: _loadDashboard,
                           color: AppTheme.green700,
@@ -228,8 +313,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildMobile(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final name     = auth.user?.name ?? 'User';
-    final email    = auth.user?.email ?? '';
+    final name = auth.user?.name ?? 'User';
+    final email = auth.user?.email ?? '';
     final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
 
     return Scaffold(
@@ -248,7 +333,9 @@ class _HomeScreenState extends State<HomeScreen> {
           if (auth.isImpersonating) _buildImpersonationBar(auth),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.green700),
+                  )
                 : RefreshIndicator(
                     onRefresh: _loadDashboard,
                     color: AppTheme.green700,
@@ -267,25 +354,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ─── Nav Items ─────────────────────────────────────────────────────────────
 
-  List<SidebarNavItem> _buildNavItems(BuildContext context, {required String isActive}) {
-    return [
-      SidebarNavItem(icon: Icons.grid_view_rounded,      label: 'Dashboard',         isActive: isActive == 'dashboard', onTap: _loadDashboard),
-      SidebarNavItem(icon: Icons.calendar_month_outlined, label: 'Musim Tanam',       onTap: () => _navTo(const SeasonScreen())),
-      SidebarNavItem(icon: Icons.agriculture_outlined,   label: 'Pencatatan Panen',  onTap: () => _navTo(const HarvestScreen())),
-      SidebarNavItem(icon: Icons.inventory_2_outlined,   label: 'Stok Gudang',       onTap: () => _navTo(const StockScreen())),
-      SidebarNavItem(icon: Icons.shopping_cart_outlined, label: 'Penjualan',         onTap: () => _navTo(const SalesScreen())),
-      SidebarNavItem(icon: Icons.attach_money_rounded,   label: 'Biaya Produksi',    onTap: () => _navTo(const CostsScreen())),
-      SidebarNavItem(icon: Icons.bar_chart_rounded,      label: 'Laporan',           onTap: () => _navTo(const ReportsScreen())),
-      SidebarNavItem(icon: Icons.smart_toy_outlined,     label: 'TaniBot AI',        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()))),
-    ];
+  List<SidebarNavItem> _buildNavItems(
+    BuildContext context, {
+    required String isActive,
+  }) {
+    return NavigationHelper.buildNavItems(context, isActive);
   }
 
   List<SidebarNavItem> _buildSecondaryNavItems(BuildContext context) {
-    return [
-      SidebarNavItem(icon: Icons.settings_outlined,  label: 'Pengaturan',   onTap: () => _navTo(const SettingsScreen())),
-      SidebarNavItem(icon: Icons.person_outline,      label: 'Profil',       onTap: () => _navTo(const ProfileScreen())),
-      SidebarNavItem(icon: Icons.feedback_outlined,   label: 'Kirim Ulasan', onTap: () => _navTo(const FeedbackScreen())),
-    ];
+    return NavigationHelper.buildSecondaryNavItems(context, 'dashboard');
   }
 
   // ─── Main content ────────────────────────────────────────────────────────────
@@ -315,12 +392,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
 
-        // Alert (low stock)
-        if (_dashboardData != null && _dashboardData!.totalStok < 5000) ...[
+        // Alert (stock threshold)
+        if (_dashboardData != null && _isStockWithinThresholdZone()) ...[
           const SizedBox(height: 16),
           AlertBanner(
-            message: 'Stok gudang mendekati batas minimum!',
-            detail: 'Sisa stok: ${_formatNumber(_dashboardData!.totalStok)} kg. Segera tambah stok.',
+            message: _getStockThresholdMessage(),
+            detail: _getStockThresholdDetail(),
           ),
         ],
 
@@ -362,14 +439,16 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── Stat Cards ──────────────────────────────────────────────────────────────
 
   Widget _buildStatCards(BuildContext context, {required bool isDesktop}) {
-    final stok   = _dashboardData!.totalStok;
-    final panen  = _dashboardData!.totalPanen;
-    final rev    = _dashboardData!.totalPenjualan;
+    final stok = _dashboardData!.totalStok;
+    final panen = _dashboardData!.totalPanen;
+    final rev = _dashboardData!.totalPenjualan;
     final profit = rev - _dashboardData!.totalBiaya;
     final txCount = _dashboardData!.transactions.length;
-    final isLow  = stok < 5000;
-    const maxStok = 15000;
-    const minStok = 0;
+    final isLow = _dashboardData!.minStock > 0
+        ? stok <= _dashboardData!.minStock
+        : stok < 5000;
+    final minStok = _dashboardData!.minStock;
+    final maxStok = _dashboardData!.maxStock;
     final stokProg = ((stok - minStok) / (maxStok - minStok)).clamp(0.0, 1.0);
 
     final cards = [
@@ -382,7 +461,9 @@ class _HomeScreenState extends State<HomeScreen> {
         badgeLabel: isLow ? 'Perhatian' : 'Normal',
         badgeBg: isLow ? AppTheme.amber100 : AppTheme.green100,
         badgeTextColor: isLow ? AppTheme.amber600 : AppTheme.green700,
-        badgeIcon: isLow ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+        badgeIcon: isLow
+            ? Icons.warning_amber_rounded
+            : Icons.check_circle_outline,
         subLabel: 'Maks: 15.000 kg',
         progressValue: stokProg,
         progressColor: isLow ? AppTheme.amber600 : AppTheme.green500,
@@ -424,26 +505,28 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     if (isDesktop) {
-      return Row(
-        children: cards.map((c) => Expanded(child: Padding(
-          padding: const EdgeInsets.only(right: AppTheme.cardGap),
-          child: c,
-        ))).toList()
-          ..last = Expanded(child: cards.last),
+      return Wrap(
+        spacing: AppTheme.cardGap,
+        runSpacing: AppTheme.cardGap,
+        children: cards.map((c) => SizedBox(width: 270, child: c)).toList(),
       );
     }
 
     return Column(
-      children: cards.map((c) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: c,
-      )).toList(),
+      children: cards
+          .map(
+            (c) =>
+                Padding(padding: const EdgeInsets.only(bottom: 12), child: c),
+          )
+          .toList(),
     );
   }
 
   Widget _buildChartSection() {
-    final harvests = _dashboardData!.harvests.take(7).map((h) => h.quantity.toDouble()).toList();
-    final sales    = _dashboardData!.transactions.take(7).map((t) => t.quantity.toDouble()).toList();
+    final stats = _dashboardData!.monthlyStats;
+    final harvests = stats.map((s) => s.harvest).toList();
+    final sales = stats.map((s) => s.sales).toList();
+    final labels = stats.map((s) => s.label).toList();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -453,17 +536,20 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border.all(color: AppTheme.cardBorder),
         boxShadow: AppTheme.cardShadow,
       ),
-      child: HarvestSalesChart(harvestData: harvests, salesData: sales),
+      child: HarvestSalesChart(
+        harvestData: harvests,
+        salesData: sales,
+        labels: labels,
+      ),
     );
   }
-
 
   // ─── Financial Summary ────────────────────────────────────────────────────────
 
   Widget _buildFinancialSummary() {
     final revenue = _dashboardData!.totalPenjualan;
-    final cost    = _dashboardData!.totalBiaya;
-    final profit  = revenue - cost;
+    final cost = _dashboardData!.totalBiaya;
+    final profit = revenue - cost;
 
     return SectionCard(
       title: 'Ringkasan Keuangan',
@@ -532,7 +618,8 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(label, style: AppTheme.bodySmall),
                 const SizedBox(height: 4),
-                Text(value,
+                Text(
+                  value,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
@@ -547,7 +634,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _finRow(String label, String value, double progress, Color barColor, Color tagBg, Color tagText) {
+  Widget _finRow(
+    String label,
+    String value,
+    double progress,
+    Color barColor,
+    Color tagBg,
+    Color tagText,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -557,8 +651,18 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(label, style: AppTheme.bodySmall),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: tagBg, borderRadius: AppTheme.tag),
-              child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: tagText)),
+              decoration: BoxDecoration(
+                color: tagBg,
+                borderRadius: AppTheme.tag,
+              ),
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: tagText,
+                ),
+              ),
             ),
           ],
         ),
@@ -576,22 +680,100 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  bool _isStockWithinThresholdZone() {
+    if (_dashboardData == null) return false;
+    final stock = _dashboardData!.totalStok;
+    final minStock = _dashboardData!.minStock;
+    final maxStock = _dashboardData!.maxStock;
+    if (stock <= minStock || stock >= maxStock) {
+      return true;
+    }
+
+    final lowThreshold = (minStock * 1.15).ceil();
+    final highThreshold = (maxStock * 0.85).floor();
+    return stock <= lowThreshold || stock >= highThreshold;
+  }
+
+  String _getStockThresholdMessage() {
+    if (_dashboardData == null) return '';
+    final stock = _dashboardData!.totalStok;
+    final minStock = _dashboardData!.minStock;
+    final maxStock = _dashboardData!.maxStock;
+
+    if (stock <= minStock) {
+      return 'Stok gudang telah mencapai batas minimum!';
+    }
+    if (stock >= maxStock) {
+      return 'Stok gudang telah mencapai batas maksimum!';
+    }
+    if (stock <= (minStock * 1.15).ceil()) {
+      return 'Stok gudang mendekati batas minimum.';
+    }
+    return 'Stok gudang mendekati batas maksimum.';
+  }
+
+  String _getStockThresholdDetail() {
+    if (_dashboardData == null) return '';
+    final stock = _dashboardData!.totalStok;
+    final minStock = _dashboardData!.minStock;
+    final maxStock = _dashboardData!.maxStock;
+
+    if (stock <= minStock) {
+      return 'Stok saat ini ${_formatNumber(stock)} kg, berada di bawah batas minimum ${_formatNumber(minStock)} kg.';
+    }
+    if (stock >= maxStock) {
+      return 'Stok saat ini ${_formatNumber(stock)} kg, telah mencapai batas maksimum ${_formatNumber(maxStock)} kg.';
+    }
+    if (stock <= (minStock * 1.15).ceil()) {
+      return 'Stok saat ini ${_formatNumber(stock)} kg. Pertimbangkan untuk menambah persediaan sebelum mencapai ${_formatNumber(minStock)} kg.';
+    }
+    return 'Stok saat ini ${_formatNumber(stock)} kg. Pertimbangkan untuk mengatur pengeluaran sebelum mencapai ${_formatNumber(maxStock)} kg.';
+  }
+
+  void _showStockThresholdAlert() {
+    if (_stockAlertShown || _dashboardData == null) return;
+    if (!_isStockWithinThresholdZone()) return;
+
+    _stockAlertShown = true;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_getStockThresholdMessage()),
+        content: Text(_getStockThresholdDetail()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ─── Target Section ───────────────────────────────────────────────────────────
 
   Widget _buildTargetSection() {
     final target = _dashboardData!.targetPanen.toDouble();
     final actual = _dashboardData!.totalPanen.toDouble();
-    final pct    = target > 0 ? (actual / target).clamp(0.0, 1.0) : 0.0;
+    final pct = target > 0 ? (actual / target).clamp(0.0, 1.0) : 0.0;
 
     return SectionCard(
       title: 'Target vs Realisasi',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Target: ${_formatNumber(target.toInt())} kg', style: AppTheme.bodySmall),
+          Text(
+            'Target: ${_formatNumber(target.toInt())} kg',
+            style: AppTheme.bodySmall,
+          ),
           const SizedBox(height: 6),
-          Text('${_formatNumber(actual.toInt())} kg',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppTheme.textPrimary),
+          Text(
+            '${_formatNumber(actual.toInt())} kg',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -604,7 +786,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text('${(pct * 100).toStringAsFixed(1)}% terpenuhi', style: AppTheme.bodySmall),
+          Text(
+            '${(pct * 100).toStringAsFixed(1)}% terpenuhi',
+            style: AppTheme.bodySmall,
+          ),
         ],
       ),
     );
@@ -627,7 +812,8 @@ class _HomeScreenState extends State<HomeScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: txns.length,
-              separatorBuilder: (_, b) => const Divider(height: 1, color: AppTheme.cardBorder),
+              separatorBuilder: (_, b) =>
+                  const Divider(height: 1, color: AppTheme.cardBorder),
               itemBuilder: (_, i) {
                 final txn = txns[i];
                 final isIn = txn.type == 'in';
@@ -636,20 +822,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: isIn ? AppTheme.green100 : AppTheme.red100,
                           borderRadius: AppTheme.tag,
                         ),
-                        child: Text(isIn ? 'Masuk' : 'Keluar',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                            color: isIn ? AppTheme.green700 : AppTheme.red600),
+                        child: Text(
+                          isIn ? 'Masuk' : 'Keluar',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isIn ? AppTheme.green700 : AppTheme.red600,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text('${txn.quantity} kg',
-                          style: AppTheme.labelBold),
+                        child: Text(
+                          '${txn.quantity} kg',
+                          style: AppTheme.labelBold,
+                        ),
                       ),
                       Text(
                         DateFormat('d MMM').format(_safeDate(txn.createdAt)),
@@ -665,7 +860,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ─── Custom Menus ─────────────────────────────────────────────────────────────
 
-  Widget _buildCustomMenusSection(BuildContext context, {required bool isDesktop}) {
+  Widget _buildCustomMenusSection(
+    BuildContext context, {
+    required bool isDesktop,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+    final crossAxis = isDesktop
+        ? (width >= 1200 ? 4 : 3)
+        : (width > 620 ? 2 : 1);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -675,22 +877,23 @@ class _HomeScreenState extends State<HomeScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isDesktop ? 3 : 2,
+            crossAxisCount: crossAxis,
             crossAxisSpacing: AppTheme.cardGap,
             mainAxisSpacing: AppTheme.cardGap,
-            childAspectRatio: isDesktop ? 2.5 : 1.6,
+            childAspectRatio: isDesktop ? 2.5 : 1.5,
           ),
           itemCount: _customMenus.length,
           itemBuilder: (_, i) {
-            final menu  = _customMenus[i];
+            final menu = _customMenus[i];
             final color = _parseHexColor(menu['color'] ?? '#27AE60');
-            final icon  = _parseIcon(menu['icon'] ?? 'widgets');
+            final icon = _parseIcon(menu['icon'] ?? 'widgets');
             return _CustomMenuCard(
               title: menu['title'] ?? '',
               description: menu['description'] ?? '',
               color: color,
               icon: icon,
-              onTap: () => _handleCustomMenuTap(context, menu as Map<String, dynamic>),
+              onTap: () =>
+                  _handleCustomMenuTap(context, menu as Map<String, dynamic>),
             );
           },
         ),
@@ -710,23 +913,45 @@ class _HomeScreenState extends State<HomeScreen> {
           const Icon(Icons.admin_panel_settings, color: Colors.white),
           const SizedBox(width: 12),
           Expanded(
-            child: Text('Impersonasi: ${authProvider.user?.name}',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            child: Text(
+              'Impersonasi: ${authProvider.user?.name}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ),
           TextButton.icon(
             onPressed: () async {
-              final success = await context.read<AuthProvider>().stopImpersonating();
+              final success = await context
+                  .read<AuthProvider>()
+                  .stopImpersonating();
               if (success && mounted) {
-                Navigator.pushAndRemoveUntil(context,
-                  MaterialPageRoute(builder: (_) => const SuperAdminDashboardScreen()), (_) => false);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SuperAdminDashboardScreen(),
+                  ),
+                  (_) => false,
+                );
               }
             },
             icon: const Icon(Icons.exit_to_app, color: Colors.white, size: 16),
-            label: const Text('Keluar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            label: const Text(
+              'Keluar',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
             style: TextButton.styleFrom(
               backgroundColor: Colors.red.shade700,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
           ),
         ],
@@ -742,17 +967,38 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppTheme.cardBg,
       selectedItemColor: AppTheme.green700,
       unselectedItemColor: AppTheme.textSecondary,
-      selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+      selectedLabelStyle: const TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+      ),
       unselectedLabelStyle: const TextStyle(fontSize: 10),
       currentIndex: _mobileNavIndex.clamp(0, 5),
       onTap: _onMobileNavTap,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Dashboard'),
-        BottomNavigationBarItem(icon: Icon(Icons.agriculture_outlined), label: 'Panen'),
-        BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), label: 'Stok'),
-        BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Penjualan'),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'Laporan'),
-        BottomNavigationBarItem(icon: Icon(Icons.more_horiz_rounded), label: 'Lainnya'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.grid_view_rounded),
+          label: 'Dashboard',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.agriculture_outlined),
+          label: 'Panen',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.inventory_2_outlined),
+          label: 'Stok',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.shopping_cart_outlined),
+          label: 'Penjualan',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.bar_chart_rounded),
+          label: 'Laporan',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.more_horiz_rounded),
+          label: 'Lainnya',
+        ),
       ],
     );
   }
@@ -761,56 +1007,132 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 10),
-            _moreItem(Icons.calendar_month_outlined, 'Musim Tanam', AppTheme.green700, () => _navTo(const SeasonScreen())),
-            _moreItem(Icons.attach_money_rounded, 'Biaya Produksi', Colors.orange, () => _navTo(const CostsScreen())),
-            _moreItem(Icons.smart_toy_outlined, 'TaniBot AI', AppTheme.blue600, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()))),
-            _moreItem(Icons.settings_outlined, 'Pengaturan', AppTheme.textSecondary, () => _navTo(const SettingsScreen())),
-            _moreItem(Icons.person_outline, 'Profil', AppTheme.textSecondary, () => _navTo(const ProfileScreen())),
-            _moreItem(Icons.feedback_outlined, 'Kirim Ulasan', AppTheme.textSecondary, () => _navTo(const FeedbackScreen())),
-            _moreItem(Icons.logout_rounded, 'Logout', AppTheme.red600, () => _showLogoutDialog(context)),
-            const SizedBox(height: 8),
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _moreItem(
+                Icons.calendar_month_outlined,
+                'Musim Tanam',
+                AppTheme.green700,
+                () => _navTo(const SeasonScreen()),
+              ),
+              _moreItem(
+                Icons.attach_money_rounded,
+                'Biaya Produksi',
+                Colors.orange,
+                () => _navTo(const CostsScreen()),
+              ),
+              _moreItem(
+                Icons.smart_toy_outlined,
+                'TaniBot AI',
+                AppTheme.blue600,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ChatbotScreen()),
+                ),
+              ),
+              _moreItem(
+                Icons.settings_outlined,
+                'Pengaturan',
+                AppTheme.textSecondary,
+                () => _navTo(const SettingsScreen()),
+              ),
+              _moreItem(
+                Icons.person_outline,
+                'Profil',
+                AppTheme.textSecondary,
+                () => _navTo(const ProfileScreen()),
+              ),
+              _moreItem(
+                Icons.feedback_outlined,
+                'Kirim Ulasan',
+                AppTheme.textSecondary,
+                () => _navTo(const FeedbackScreen()),
+              ),
+              _moreItem(
+                Icons.logout_rounded,
+                'Logout',
+                AppTheme.red600,
+                () => _showLogoutDialog(context),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _moreItem(IconData icon, String title, Color color, VoidCallback onTap) {
+  Widget _moreItem(
+    IconData icon,
+    String title,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Icon(icon, color: color, size: 20),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textSecondary),
-      onTap: () { Navigator.pop(context); onTap(); },
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 14,
+        color: AppTheme.textSecondary,
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
     );
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   String _formatCurrency(int value) =>
-    'Rp ${value.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}';
+      'Rp ${value.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.')}';
 
   String _formatCurrencyShort(int value) {
-    if (value.abs() >= 1000000000) return 'Rp ${(value / 1000000000).toStringAsFixed(1)} M';
-    if (value.abs() >= 1000000) return 'Rp ${(value / 1000000).toStringAsFixed(1)} jt';
+    if (value.abs() >= 1000000000) {
+      return 'Rp ${(value / 1000000000).toStringAsFixed(1)} M';
+    }
+    if (value.abs() >= 1000000) {
+      return 'Rp ${(value / 1000000).toStringAsFixed(1)} jt';
+    }
     return _formatCurrency(value);
   }
 
-  String _formatNumber(int value) =>
-    value.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+  String _formatNumber(int value) => value.toString().replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (m) => '.',
+  );
 
-  DateTime _safeDate(String? s) => s != null && s.isNotEmpty ? (DateTime.tryParse(s) ?? DateTime.now()) : DateTime.now();
+  DateTime _safeDate(String? s) => s != null && s.isNotEmpty
+      ? (DateTime.tryParse(s) ?? DateTime.now())
+      : DateTime.now();
 
   // Legacy helpers preserved for API compatibility
   // ignore: unused_element
@@ -847,14 +1169,16 @@ class _CustomMenuCardState extends State<_CustomMenuCard> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _hovered ? widget.color.withValues(alpha: 0.08) : AppTheme.cardBg,
+            color: _hovered
+                ? widget.color.withValues(alpha: 0.08)
+                : AppTheme.cardBg,
             border: Border(left: BorderSide(color: widget.color, width: 4)),
             borderRadius: AppTheme.tag,
             boxShadow: AppTheme.cardShadow,
@@ -863,7 +1187,10 @@ class _CustomMenuCardState extends State<_CustomMenuCard> {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Icon(widget.icon, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 14),
@@ -872,12 +1199,26 @@ class _CustomMenuCardState extends State<_CustomMenuCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(widget.title, style: AppTheme.labelBold, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(widget.description, style: AppTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(
+                      widget.title,
+                      style: AppTheme.labelBold,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      widget.description,
+                      style: AppTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, color: widget.color, size: 14),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: widget.color,
+                size: 14,
+              ),
             ],
           ),
         ),

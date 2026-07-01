@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # 1. Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: kentang_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - kentang_db_data:/var/lib/mysql
+    networks:
+      - pertanian_network
+
+  # 2. Redis/Cache
+  cache:
+    image: redis:alpine
+    container_name: kentang_cache
+    restart: unless-stopped
+    networks:
+      - pertanian_network
+
+  # 3. Backend Laravel App (PHP 8.3)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kentang_app
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    depends_on:
+      - db
+    networks:
+      - pertanian_network
+
+  # 4. Laravel Scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kentang_scheduler
+    restart: unless-stopped
+    command: php /app/artisan schedule:work
+    volumes:
+      - ./:/app
+    depends_on:
+      - app
+    networks:
+      - pertanian_network
+
+  # 5. Web Server Nginx (Port 8000)
+  nginx:
+    image: nginx:alpine
+    container_name: kentang_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/app
+      - ./docker/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - pertanian_network
+
+  # 6. n8n AI Automation (Port 5678)
+  n8n_ai:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: kentang_n8n_ai
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+    volumes:
+      - n8n_storage:/home/node/.n8n
+    networks:
+      - pertanian_network
+
+networks:
+  pertanian_network:
+    driver: bridge
+
+volumes:
+  kentang_db_data:
+  n8n_storage:

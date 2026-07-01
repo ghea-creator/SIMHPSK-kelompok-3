@@ -430,10 +430,12 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                         focusedBorder: InputBorder.none,
                       ),
                       validator: (value) {
-                        if (value?.isEmpty ?? true)
+                        if (value?.isEmpty ?? true) {
                           return 'Tanggal harus diisi';
-                        if (DateTime.tryParse(value!) == null)
+                        }
+                        if (DateTime.tryParse(value!) == null) {
                           return 'Tanggal tidak valid';
+                        }
                         return null;
                       },
                     ),

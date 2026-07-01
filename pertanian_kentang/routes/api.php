@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CostController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HarvestController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SeasonController;
@@ -69,6 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/settings/password', [SettingController::class, 'updatePasswordApi']);
     Route::post('/settings/gudang', [SettingController::class, 'updateGudangApi']);
     Route::post('/settings/notifications', [SettingController::class, 'updateNotificationsApi']);
+    Route::delete('/settings/account', [SettingController::class, 'deleteAccountApi']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'indexApi']);
+    Route::post('/notifications/read', [NotificationController::class, 'markAsReadApi']);
 
     // Feedback
     Route::post('/feedback', [FeedbackController::class, 'storeApi']);
