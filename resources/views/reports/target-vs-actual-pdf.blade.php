@@ -5,58 +5,79 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <title>Laporan Target vs Realisasi</title>
     <style>
+        @page {
+            size: A4;
+            margin: 15mm 12mm 15mm 12mm;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
+            font-size: 8px;
+            line-height: 1.15;
             color: #222;
             background: #fff;
+            padding: 4mm 0;
         }
         .header {
             background: #1B5E20;
             color: white;
-            padding: 20px 24px;
-            border-radius: 4px;
-            margin-bottom: 20px;
+            padding: 8px 10px;
+            border-radius: 3px;
+            margin-bottom: 8px;
         }
-        .header h1 { font-size: 20px; margin-bottom: 4px; }
-        .header p { font-size: 11px; color: #A5D6A7; }
-        .meta-table { width: 100%; margin-bottom: 20px; }
-        .meta-table td { padding: 3px 6px; font-size: 11px; }
-        .meta-table td:first-child { color: #555; width: 140px; }
+        .header h1 { font-size: 14px; margin-bottom: 1px; }
+        .header p { font-size: 7.5px; color: #A5D6A7; }
+        .meta-table { width: 100%; margin-bottom: 8px; }
+        .meta-table td { padding: 1px 2px; font-size: 8px; }
+        .meta-table td:first-child { color: #555; width: 120px; }
 
         .section-title {
-            font-size: 13px;
+            font-size: 10px;
             font-weight: bold;
             color: #1B5E20;
-            border-bottom: 2px solid #1B5E20;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            border-bottom: 1px solid #1B5E20;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
         }
         .section-desc {
-            font-size: 10px;
+            font-size: 7px;
             color: #666;
-            margin-bottom: 16px;
+            margin-bottom: 6px;
         }
 
         table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 16px;
-            font-size: 10px;
+            margin-bottom: 6px;
+            font-size: 8px;
+            table-layout: fixed;
         }
+        table.data-table colgroup col:first-child { width: 6%; }
+        table.data-table colgroup col:nth-child(2) { width: 30%; }
+        table.data-table colgroup col:nth-child(3) { width: 12%; }
+        table.data-table colgroup col:nth-child(4) { width: 12%; }
+        table.data-table colgroup col:nth-child(5) { width: 12%; }
+        table.data-table colgroup col:nth-child(6) { width: 15%; }
+        table.data-table colgroup col:nth-child(7) { width: 13%; }
         table.data-table thead th {
             background: #E8F5E9;
             color: #1B5E20;
-            padding: 8px 10px;
+            padding: 3px 4px;
             text-align: left;
             font-weight: bold;
             border: 1px solid #C8E6C9;
+            word-break: break-word;
         }
         table.data-table tbody td {
-            padding: 8px 10px;
+            padding: 3px 5px;
             border: 1px solid #e0e0e0;
             vertical-align: middle;
+            word-break: break-word;
+            white-space: normal;
+        }
+        table.data-table tbody tr {
+            page-break-inside: avoid;
         }
         table.data-table tbody tr:nth-child(even) td {
             background: #F9FBE7;
@@ -67,12 +88,12 @@
         .progress-wrap {
             background: #f0f0f0;
             border-radius: 6px;
-            height: 10px;
+            height: 6px;
             width: 100%;
             overflow: hidden;
         }
         .progress-bar {
-            height: 10px;
+            height: 6px;
             border-radius: 6px;
         }
         .bar-success { background: #27AE60; }
@@ -81,9 +102,9 @@
 
         .badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 1px 5px;
             border-radius: 10px;
-            font-size: 9px;
+            font-size: 7px;
             font-weight: bold;
         }
         .badge-success { background: #E8F5E9; color: #27AE60; }
@@ -91,21 +112,21 @@
         .badge-danger  { background: #FFEBEE; color: #EB5757; }
 
         .summary-row {
-            margin-bottom: 20px;
+            margin-bottom: 8px;
         }
-        .summary-cards { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .summary-cards td { padding: 12px 16px; border: 1px solid #e0e0e0; }
-        .card-label { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        .card-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
+        .summary-cards { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .summary-cards td { padding: 7px 8px; border: 1px solid #e0e0e0; vertical-align: middle; }
+        .card-label { font-size: 7px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
+        .card-value { font-size: 11px; font-weight: bold; margin-top: 1px; }
         .card-green .card-value { color: #27AE60; }
         .card-orange .card-value { color: #F39C12; }
         .card-blue .card-value { color: #2D9CDB; }
 
         .footer {
-            margin-top: 30px;
+            margin-top: 6px;
             border-top: 1px solid #e0e0e0;
-            padding-top: 10px;
-            font-size: 9px;
+            padding-top: 4px;
+            font-size: 6.5px;
             color: #aaa;
             text-align: center;
         }
@@ -166,6 +187,15 @@
 
 @if(count($data) > 0)
 <table class="data-table">
+    <colgroup>
+        <col style="width:6%;" />
+        <col style="width:30%;" />
+        <col style="width:12%;" />
+        <col style="width:12%;" />
+        <col style="width:12%;" />
+        <col style="width:15%;" />
+        <col style="width:13%;" />
+    </colgroup>
     <thead>
         <tr>
             <th>#</th>

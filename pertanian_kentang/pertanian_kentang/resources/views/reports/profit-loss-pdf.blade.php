@@ -5,12 +5,17 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <title>Laporan Laba Rugi</title>
     <style>
+        @page {
+            size: A4;
+            margin: 15mm 12mm 15mm 12mm;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 11px;
             color: #222;
             background: #fff;
+            padding: 4mm 0;
         }
         .header {
             background: #1B5E20;
@@ -28,8 +33,8 @@
             display: block;
             margin-bottom: 20px;
         }
-        .summary-cards { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .summary-cards td { padding: 14px 16px; border: 1px solid #e0e0e0; vertical-align: top; border-radius: 4px; }
+        .summary-cards { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
+        .summary-cards td { padding: 14px 16px; border: 1px solid #e0e0e0; vertical-align: top; border-radius: 4px; width:33%; }
         .summary-cards .card-label { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .summary-cards .card-value { font-size: 16px; font-weight: bold; margin-top: 4px; }
         .card-green .card-value { color: #27AE60; }
