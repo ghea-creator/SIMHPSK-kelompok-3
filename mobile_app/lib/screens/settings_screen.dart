@@ -7,14 +7,6 @@ import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
 import '../utils/navigation_helper.dart';
-import 'home_screen.dart';
-import 'season_screen.dart';
-import 'harvest_screen.dart';
-import 'stock_screen.dart';
-import 'sales_screen.dart';
-import 'costs_screen.dart';
-import 'reports_screen.dart';
-import 'profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -88,13 +80,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  
   Future<void> _deleteAccount() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Hapus Akun'),
-        content: const Text('Apakah Anda yakin ingin menghapus akun ini secara permanen? Semua data Anda akan terhapus.'),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus akun ini secara permanen? Semua data Anda akan terhapus.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -303,7 +296,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
                   navItems: NavigationHelper.buildNavItems(context, 'settings'),
-                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'settings'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(
+                    context,
+                    'settings',
+                  ),
                 ),
           body: Row(
             children: [
@@ -314,7 +310,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
                   navItems: NavigationHelper.buildNavItems(context, 'settings'),
-                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'settings'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(
+                    context,
+                    'settings',
+                  ),
                 ),
               Expanded(
                 child: Column(
@@ -328,7 +327,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     Expanded(
                       child: _isLoading
-                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.green700,
+                              ),
+                            )
                           : SingleChildScrollView(
                               padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
                               child: Center(
@@ -338,7 +341,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   child: isDesktop
                                       ? Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
                                               child: Column(
@@ -391,57 +395,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  List<SidebarNavItem> _buildNavItems(BuildContext context) {
-    return [
-      SidebarNavItem(
-        icon: Icons.grid_view_rounded,
-        label: 'Dashboard',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.calendar_month_outlined,
-        label: 'Musim Tanam',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SeasonScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.agriculture_outlined,
-        label: 'Pencatatan Panen',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HarvestScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.inventory_2_outlined,
-        label: 'Stok Gudang',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StockScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.shopping_cart_outlined,
-        label: 'Penjualan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SalesScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.attach_money_rounded,
-        label: 'Biaya Produksi',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const CostsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.bar_chart_rounded,
-        label: 'Laporan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ReportsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.person,
-        label: 'Profil',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.settings,
-        label: 'Pengaturan',
-        isActive: true,
-        onTap: () {},
-      ),
-    ];
-  }
-
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -449,7 +402,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Logout'),
         content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           TextButton(
             onPressed: () async {
               final navigator = Navigator.of(context);
@@ -566,7 +522,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : const Text('Hapus Akun Permanen'),
                 ),
               ),
-
             ],
           ),
         ),

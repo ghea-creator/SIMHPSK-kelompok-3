@@ -35,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── Business Logic (unchanged) ──────────────────────────────────────────────
   late ApiService _apiService;
   DashboardData? _dashboardData;
-  List<dynamic> _customMenus = [];
   bool _isLoading = true;
   String? _errorMessage;
   bool _stockAlertShown = false;
@@ -57,13 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final data = await _apiService.getDashboard();
-      final menus = await _apiService.getDashboardMenus();
       if (mounted) {
         setState(() {
           _dashboardData = data;
-          _customMenus = menus
-              .where((m) => m['is_active'] == 1 || m['is_active'] == true)
-              .toList();
           _isLoading = false;
         });
 
@@ -112,66 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
       'help': Icons.help,
     };
     return map[iconName] ?? Icons.widgets;
-  }
-
-  void _handleCustomMenuTap(BuildContext context, Map<String, dynamic> menu) {
-    final url = (menu['url'] ?? '').toString().toLowerCase().trim();
-    void push(Widget s) => Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => s),
-    ).then((_) => _loadDashboard());
-    if (url.contains('cost') || url.contains('biaya')) {
-      push(const CostsScreen());
-    } else if (url.contains('report') ||
-        url.contains('laporan') ||
-        url.contains('analis')) {
-      push(const ReportsScreen());
-    } else if (url.contains('setting') || url.contains('pengaturan')) {
-      push(const SettingsScreen());
-    } else if (url.contains('harvest') || url.contains('panen')) {
-      push(const HarvestScreen());
-    } else if (url.contains('stock') ||
-        url.contains('stok') ||
-        url.contains('gudang')) {
-      push(const StockScreen());
-    } else if (url.contains('sale') || url.contains('jual')) {
-      push(const SalesScreen());
-    } else if (url.contains('season') || url.contains('musim')) {
-      push(const SeasonScreen());
-    } else if (url.contains('feedback') || url.contains('ulasan')) {
-      push(const FeedbackScreen());
-    } else if (url.contains('bot') || url.contains('chat')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ChatbotScreen()),
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            menu['title'] ?? '',
-            style: const TextStyle(
-              color: AppTheme.green700,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            menu['description'] ?? '',
-            style: const TextStyle(fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup'),
-            ),
-          ],
-        ),
-      );
-    }
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -634,52 +569,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _finRow(
-    String label,
-    String value,
-    double progress,
-    Color barColor,
-    Color tagBg,
-    Color tagText,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: AppTheme.bodySmall),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: tagBg,
-                borderRadius: AppTheme.tag,
-              ),
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: tagText,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: AppTheme.cardBorder,
-            color: barColor,
-          ),
-        ),
-      ],
-    );
-  }
-
   bool _isStockWithinThresholdZone() {
     if (_dashboardData == null) return false;
     final stock = _dashboardData!.totalStok;
@@ -750,51 +639,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ─── Target Section ───────────────────────────────────────────────────────────
-
-  Widget _buildTargetSection() {
-    final target = _dashboardData!.targetPanen.toDouble();
-    final actual = _dashboardData!.totalPanen.toDouble();
-    final pct = target > 0 ? (actual / target).clamp(0.0, 1.0) : 0.0;
-
-    return SectionCard(
-      title: 'Target vs Realisasi',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Target: ${_formatNumber(target.toInt())} kg',
-            style: AppTheme.bodySmall,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${_formatNumber(actual.toInt())} kg',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: pct,
-              minHeight: 8,
-              backgroundColor: AppTheme.cardBorder,
-              color: pct >= 1.0 ? AppTheme.green500 : AppTheme.amber600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${(pct * 100).toStringAsFixed(1)}% terpenuhi',
-            style: AppTheme.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
-
   // ─── Transactions Section ─────────────────────────────────────────────────────
 
   Widget _buildTransactionsSection() {
@@ -855,49 +699,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-    );
-  }
-
-  // ─── Custom Menus ─────────────────────────────────────────────────────────────
-
-  Widget _buildCustomMenusSection(
-    BuildContext context, {
-    required bool isDesktop,
-  }) {
-    final width = MediaQuery.of(context).size.width;
-    final crossAxis = isDesktop
-        ? (width >= 1200 ? 4 : 3)
-        : (width > 620 ? 2 : 1);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Menu Tambahan', style: AppTheme.h3),
-        const SizedBox(height: 14),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxis,
-            crossAxisSpacing: AppTheme.cardGap,
-            mainAxisSpacing: AppTheme.cardGap,
-            childAspectRatio: isDesktop ? 2.5 : 1.5,
-          ),
-          itemCount: _customMenus.length,
-          itemBuilder: (_, i) {
-            final menu = _customMenus[i];
-            final color = _parseHexColor(menu['color'] ?? '#27AE60');
-            final icon = _parseIcon(menu['icon'] ?? 'widgets');
-            return _CustomMenuCard(
-              title: menu['title'] ?? '',
-              description: menu['description'] ?? '',
-              color: color,
-              icon: icon,
-              onTap: () =>
-                  _handleCustomMenuTap(context, menu as Map<String, dynamic>),
-            );
-          },
-        ),
-      ],
     );
   }
 

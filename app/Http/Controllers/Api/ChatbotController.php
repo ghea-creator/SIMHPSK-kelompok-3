@@ -18,7 +18,7 @@ class ChatbotController extends Controller
         $userMessage = $request->message;
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
+            'Authorization' => 'Bearer '.$apiKey,
             'Content-Type' => 'application/json',
         ])->post('https://api.groq.com/openai/v1/chat/completions', [
             'model' => 'llama-3.1-8b-instant',
@@ -44,24 +44,25 @@ class ChatbotController extends Controller
                     5. Tetap bantu pertanyaan seputar pertanian kentang secara umum
                     6. Selalu promosikan fitur aplikasi yang relevan di akhir jawaban
                     7. Gunakan emoji yang relevan agar lebih menarik
-                    8. Jawab dalam bahasa Indonesia yang ramah dan mudah dipahami petani'
+                    8. Jawab dalam bahasa Indonesia yang ramah dan mudah dipahami petani',
                 ],
                 [
                     'role' => 'user',
-                    'content' => $userMessage
-                ]
+                    'content' => $userMessage,
+                ],
             ],
             'max_tokens' => 1000,
         ]);
 
         if ($response->successful()) {
             $text = $response->json('choices.0.message.content');
+
             return response()->json(['reply' => $text]);
         }
 
         return response()->json([
             'reply' => 'Maaf, terjadi kesalahan.',
-            'error' => $response->json()
+            'error' => $response->json(),
         ], 500);
     }
 }

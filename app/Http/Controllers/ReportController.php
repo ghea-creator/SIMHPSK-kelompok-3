@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProfitLossExport;
+use App\Exports\TargetVsActualExport;
 use App\Models\Harvest;
 use App\Models\ProductionCost;
 use App\Models\Sale;
 use App\Models\Season;
 use App\Traits\ApiResponseTrait;
-use App\Exports\ProfitLossExport;
-use App\Exports\TargetVsActualExport;
-use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
     use ApiResponseTrait;
+
     public function profitLoss(Request $request)
     {
         if ($request->wantsJson()) {
@@ -39,24 +40,24 @@ class ReportController extends Controller
     {
         $userId = $request->user()->id;
         $seasonId = $request->query('season_id');
-        
+
         $harvestQuery = Harvest::where('user_id', $userId);
         if ($seasonId) {
             $harvestQuery->where('season_id', $seasonId);
         }
-        $totalHarvest = (int)$harvestQuery->sum('weight_kg');
+        $totalHarvest = (int) $harvestQuery->sum('weight_kg');
 
         $saleQuery = Sale::where('user_id', $userId);
         if ($seasonId) {
             $saleQuery->where('season_id', $seasonId);
         }
-        $totalRevenue = (int)$saleQuery->sum('total');
+        $totalRevenue = (int) $saleQuery->sum('total');
 
         $costQuery = ProductionCost::where('user_id', $userId);
         if ($seasonId) {
             $costQuery->where('season_id', $seasonId);
         }
-        $totalCost = (int)$costQuery->sum('amount');
+        $totalCost = (int) $costQuery->sum('amount');
         $profit = $totalRevenue - $totalCost;
 
         return $this->successResponse([
@@ -71,11 +72,11 @@ class ReportController extends Controller
     {
         $userId = $request->user()->id;
         $seasons = Season::where('user_id', $userId)->get();
-        
+
         $data = [];
         foreach ($seasons as $season) {
-            $harvest = (int)$season->harvests()->sum('weight_kg');
-            $target = (int)$season->target_kg;
+            $harvest = (int) $season->harvests()->sum('weight_kg');
+            $target = (int) $season->target_kg;
             $percentage = $target > 0 ? round(($harvest / $target) * 100, 2) : 0;
 
             $data[] = [
@@ -109,12 +110,12 @@ class ReportController extends Controller
 
         $totalRevenue = $saleQuery->sum('total');
         $totalCost = $costQuery->sum('amount');
-        
+
         $sales = $saleQuery->with('season')->get();
         $costs = $costQuery->with('season')->get();
 
-        $filename = 'Laporan_Laba_Rugi_' . now()->format('Y-m-d_His') . '.xlsx';
-        
+        $filename = 'Laporan_Laba_Rugi_'.now()->format('Y-m-d_His').'.xlsx';
+
         return Excel::download(
             new ProfitLossExport($sales, $costs, $user, $totalRevenue, $totalCost),
             $filename
@@ -149,9 +150,14 @@ class ReportController extends Controller
             'profit' => $profit,
             'sales' => $sales,
             'costs' => $costs,
-        ]);
+        ])
+            ->setPaper('A4', 'portrait')
+            ->setOption('margin-top', '0mm')
+            ->setOption('margin-right', '0mm')
+            ->setOption('margin-bottom', '0mm')
+            ->setOption('margin-left', '0mm');
 
-        return $pdf->download('Laporan_Laba_Rugi_' . now()->format('Y-m-d_His') . '.pdf');
+        return $pdf->download('Laporan_Laba_Rugi_'.now()->format('Y-m-d_His').'.pdf');
     }
 
     // Export Target vs Actual Report to Excel
@@ -176,7 +182,7 @@ class ReportController extends Controller
             ];
         }
 
-        $filename = 'Laporan_Target_vs_Realisasi_' . now()->format('Y-m-d_His') . '.xlsx';
+        $filename = 'Laporan_Target_vs_Realisasi_'.now()->format('Y-m-d_His').'.xlsx';
 
         return Excel::download(
             new TargetVsActualExport($data, $user),
@@ -208,9 +214,14 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reports.target-vs-actual-pdf', [
             'user' => $user,
             'data' => $data,
-        ]);
+        ])
+            ->setPaper('A4', 'portrait')
+            ->setOption('margin-top', '0mm')
+            ->setOption('margin-right', '0mm')
+            ->setOption('margin-bottom', '0mm')
+            ->setOption('margin-left', '0mm');
 
-        return $pdf->download('Laporan_Target_vs_Realisasi_' . now()->format('Y-m-d_His') . '.pdf');
+        return $pdf->download('Laporan_Target_vs_Realisasi_'.now()->format('Y-m-d_His').'.pdf');
     }
 
     // API Export Methods
@@ -232,18 +243,18 @@ class ReportController extends Controller
 
             $totalRevenue = $saleQuery->sum('total');
             $totalCost = $costQuery->sum('amount');
-            
+
             $sales = $saleQuery->with('season')->get();
             $costs = $costQuery->with('season')->get();
 
-            $filename = 'Laporan_Laba_Rugi_' . now()->format('Y-m-d_His') . '.xlsx';
-            
+            $filename = 'Laporan_Laba_Rugi_'.now()->format('Y-m-d_His').'.xlsx';
+
             return Excel::download(
                 new ProfitLossExport($sales, $costs, $user, $totalRevenue, $totalCost),
                 $filename
             );
         } catch (\Exception $e) {
-            return $this->errorResponse('Gagal mengexport laporan: ' . $e->getMessage(), 400);
+            return $this->errorResponse('Gagal mengexport laporan: '.$e->getMessage(), 400);
         }
     }
 
@@ -276,12 +287,18 @@ class ReportController extends Controller
                 'profit' => $profit,
                 'sales' => $sales,
                 'costs' => $costs,
-            ]);
+            ])
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', '20mm')
+                ->setOption('margin-right', '20mm')
+                ->setOption('margin-bottom', '20mm')
+                ->setOption('margin-left', '20mm');
 
-            return $pdf->download('Laporan_Laba_Rugi_' . now()->format('Y-m-d_His') . '.pdf');
+            return $pdf->download('Laporan_Laba_Rugi_'.now()->format('Y-m-d_His').'.pdf');
         } catch (\Exception $e) {
-            Log::error('PDF Export Error (Profit-Loss): ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
-            return $this->errorResponse('Gagal mengexport laporan: ' . $e->getMessage(), 500);
+            Log::error('PDF Export Error (Profit-Loss): '.$e->getMessage().' | '.$e->getTraceAsString());
+
+            return $this->errorResponse('Gagal mengexport laporan: '.$e->getMessage(), 500);
         }
     }
 
@@ -307,14 +324,14 @@ class ReportController extends Controller
                 ];
             }
 
-            $filename = 'Laporan_Target_vs_Realisasi_' . now()->format('Y-m-d_His') . '.xlsx';
+            $filename = 'Laporan_Target_vs_Realisasi_'.now()->format('Y-m-d_His').'.xlsx';
 
             return Excel::download(
                 new TargetVsActualExport($data, $user),
                 $filename
             );
         } catch (\Exception $e) {
-            return $this->errorResponse('Gagal mengexport laporan: ' . $e->getMessage(), 400);
+            return $this->errorResponse('Gagal mengexport laporan: '.$e->getMessage(), 400);
         }
     }
 
@@ -343,12 +360,18 @@ class ReportController extends Controller
             $pdf = Pdf::loadView('reports.target-vs-actual-pdf', [
                 'user' => $user,
                 'data' => $data,
-            ]);
+            ])
+                ->setPaper('A4', 'portrait')
+                ->setOption('margin-top', '15mm')
+                ->setOption('margin-right', '12mm')
+                ->setOption('margin-bottom', '15mm')
+                ->setOption('margin-left', '12mm');
 
-            return $pdf->download('Laporan_Target_vs_Realisasi_' . now()->format('Y-m-d_His') . '.pdf');
+            return $pdf->download('Laporan_Target_vs_Realisasi_'.now()->format('Y-m-d_His').'.pdf');
         } catch (\Exception $e) {
-            Log::error('PDF Export Error (Target-vs-Actual): ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
-            return $this->errorResponse('Gagal mengexport laporan: ' . $e->getMessage(), 500);
+            Log::error('PDF Export Error (Target-vs-Actual): '.$e->getMessage().' | '.$e->getTraceAsString());
+
+            return $this->errorResponse('Gagal mengexport laporan: '.$e->getMessage(), 500);
         }
     }
 }

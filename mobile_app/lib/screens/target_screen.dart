@@ -45,7 +45,10 @@ class _TargetScreenState extends State<TargetScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat data target: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal memuat data target: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -59,7 +62,10 @@ class _TargetScreenState extends State<TargetScreen> {
         title: const Text('Keluar'),
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           TextButton(
             onPressed: () async {
               final nav = Navigator.of(context);
@@ -89,36 +95,54 @@ class _TargetScreenState extends State<TargetScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Masukkan target produksi baru (kg):', style: AppTheme.bodySmall),
+            const Text(
+              'Masukkan target produksi baru (kg):',
+              style: AppTheme.bodySmall,
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: InputDecoration(
                 labelText: 'Target (Kg)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 prefixIcon: const Icon(Icons.track_changes_rounded),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.green700,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () async {
               final val = double.tryParse(controller.text);
+              final messenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
+
               if (val == null || val <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Nilai target tidak valid')),
                 );
                 return;
               }
-              Navigator.pop(context);
+
+              navigator.pop();
+              if (!mounted) return;
+
               setState(() => _isLoading = true);
               try {
                 final res = await _apiService.updateSeason(
@@ -130,18 +154,24 @@ class _TargetScreenState extends State<TargetScreen> {
                   targetKg: val,
                   notes: season.notes,
                 );
+
+                if (!mounted) return;
+
                 if (res['success'] == true) {
                   _loadData();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Target panen berhasil diperbarui'), backgroundColor: Colors.green),
-                    );
-                  }
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Target panen berhasil diperbarui'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 } else {
                   _loadData();
                 }
               } catch (e) {
-                _loadData();
+                if (mounted) {
+                  _loadData();
+                }
               }
             },
             child: const Text('Simpan'),
@@ -190,7 +220,10 @@ class _TargetScreenState extends State<TargetScreen> {
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
                   navItems: NavigationHelper.buildNavItems(context, 'target'),
-                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'target'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(
+                    context,
+                    'target',
+                  ),
                 ),
           body: Row(
             children: [
@@ -201,7 +234,10 @@ class _TargetScreenState extends State<TargetScreen> {
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
                   navItems: NavigationHelper.buildNavItems(context, 'target'),
-                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'target'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(
+                    context,
+                    'target',
+                  ),
                 ),
               Expanded(
                 child: Column(
@@ -209,13 +245,18 @@ class _TargetScreenState extends State<TargetScreen> {
                     if (isDesktop)
                       AppHeader(
                         title: 'Target Panen & Realisasi',
-                        subtitle: 'Pantau pencapaian target produksi pertanian kentang per musim',
+                        subtitle:
+                            'Pantau pencapaian target produksi pertanian kentang per musim',
                         userInitials: initials,
                         onRefresh: _loadData,
                       ),
                     Expanded(
                       child: _isLoading
-                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.green700,
+                              ),
+                            )
                           : RefreshIndicator(
                               onRefresh: _loadData,
                               color: AppTheme.green700,
@@ -227,7 +268,10 @@ class _TargetScreenState extends State<TargetScreen> {
                                   children: [
                                     _buildActiveTargetHero(isDesktop),
                                     const SizedBox(height: 24),
-                                    const Text('Daftar Target Musim Tanam', style: AppTheme.h2),
+                                    const Text(
+                                      'Daftar Target Musim Tanam',
+                                      style: AppTheme.h2,
+                                    ),
                                     const SizedBox(height: 12),
                                     _seasons.isEmpty
                                         ? _buildEmptyState()
@@ -264,7 +308,10 @@ class _TargetScreenState extends State<TargetScreen> {
           border: Border.all(color: AppTheme.cardBorder),
         ),
         child: const Center(
-          child: Text('Belum ada musim tanam aktif untuk menampilkan target.', style: AppTheme.bodySmall),
+          child: Text(
+            'Belum ada musim tanam aktif untuk menampilkan target.',
+            style: AppTheme.bodySmall,
+          ),
         ),
       );
     }
@@ -288,7 +335,7 @@ class _TargetScreenState extends State<TargetScreen> {
             color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -298,18 +345,29 @@ class _TargetScreenState extends State<TargetScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.eco_rounded, color: Colors.greenAccent, size: 16),
+                    const Icon(
+                      Icons.eco_rounded,
+                      color: Colors.greenAccent,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Musim Aktif: ${activeSeason.name}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -329,22 +387,36 @@ class _TargetScreenState extends State<TargetScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Realisasi Saat Ini', style: TextStyle(color: Colors.blue.shade100, fontSize: 13)),
+                  Text(
+                    'Realisasi Saat Ini',
+                    style: TextStyle(color: Colors.blue.shade100, fontSize: 13),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '${_formatNumber(actual.toInt())} kg',
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Target Produksi', style: TextStyle(color: Colors.blue.shade100, fontSize: 13)),
+                  Text(
+                    'Target Produksi',
+                    style: TextStyle(color: Colors.blue.shade100, fontSize: 13),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '${_formatNumber(target.toInt())} kg',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -366,14 +438,20 @@ class _TargetScreenState extends State<TargetScreen> {
             children: [
               Text(
                 '$pctString% Terpenuhi',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               Text(
                 actual >= target
                     ? '🎉 Target telah tercapai!'
                     : 'Kurang ${_formatNumber((target - actual).toInt())} kg lagi',
                 style: TextStyle(
-                  color: actual >= target ? Colors.greenAccent : Colors.amberAccent,
+                  color: actual >= target
+                      ? Colors.greenAccent
+                      : Colors.amberAccent,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -391,9 +469,16 @@ class _TargetScreenState extends State<TargetScreen> {
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(Icons.track_changes_outlined, size: 70, color: Colors.grey.shade400),
+            Icon(
+              Icons.track_changes_outlined,
+              size: 70,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
-            Text('Belum ada data target musim tanam', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+            Text(
+              'Belum ada data target musim tanam',
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
           ],
         ),
       ),
@@ -428,13 +513,23 @@ class _TargetScreenState extends State<TargetScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(season.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        season.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                       const SizedBox(width: 10),
                       _buildStatusBadge(season.status),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
                     onPressed: () => _showEditTargetDialog(season),
                   ),
                 ],
@@ -443,8 +538,17 @@ class _TargetScreenState extends State<TargetScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Target: ${_formatNumber(target.toInt())} kg', style: AppTheme.bodySmall),
-                  Text('Realisasi: ${_formatNumber(actual.toInt())} kg', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(
+                    'Target: ${_formatNumber(target.toInt())} kg',
+                    style: AppTheme.bodySmall,
+                  ),
+                  Text(
+                    'Realisasi: ${_formatNumber(actual.toInt())} kg',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -460,7 +564,14 @@ class _TargetScreenState extends State<TargetScreen> {
               const SizedBox(height: 6),
               Align(
                 alignment: Alignment.centerRight,
-                child: Text('${(pct * 100).toStringAsFixed(1)}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: pct >= 1.0 ? AppTheme.green700 : AppTheme.amber600)),
+                child: Text(
+                  '${(pct * 100).toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: pct >= 1.0 ? AppTheme.green700 : AppTheme.amber600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -488,12 +599,25 @@ class _TargetScreenState extends State<TargetScreen> {
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: TextStyle(color: text, fontSize: 11, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: text,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
   String _formatNumber(int val) {
-    return val.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+    return val.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (m) => '.',
+    );
   }
 }
