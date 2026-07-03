@@ -272,8 +272,10 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                     controller: _scrollController,
                     child: Column(
                       children: [
-                        // Spacer for Navigation Bar height (70px)
-                        const SizedBox(height: 70),
+                        // Spacer for Navigation Bar height (70px).
+                        // On mobile add top padding for status bar/notch so
+                        // the hero content isn't hidden behind the nav.
+                        SizedBox(height: isDesktop ? 70 : 70 + MediaQuery.of(context).padding.top),
 
                         if (_errorMessage != null)
                           Container(
@@ -356,17 +358,24 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                   ),
           ),
 
-          // Sticky Top Navigation
+          // Sticky Top Navigation (respect safe area on mobile)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: _buildNavigation(context, isDesktop),
+            child: SafeArea(top: true, bottom: false, child: _buildNavigation(context, isDesktop)),
           ),
 
           // Mobile Drawer Overlay Menu
           if (_isMobileMenuOpen && !isDesktop)
-            _buildMobileMenuOverlay(context),
+            // Ensure overlay appears under the status bar on mobile
+            Positioned(
+              top: 70 + MediaQuery.of(context).padding.top,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _buildMobileMenuOverlay(context),
+            ),
         ],
       ),
     );
@@ -721,7 +730,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                         Transform.translate(
                           offset: const Offset(0, -2),
                           child: Text(
-                            'MANAJEMEN PERTANIAN',
+                            'PENCATATAN PERTANIAN',
                             style: TextStyle(
                               color: const Color(0xFF6B6050),
                               fontSize: 9,
@@ -1058,7 +1067,7 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
                       letterSpacing: -1.0,
                     ),
                     children: [
-                      TextSpan(text: '${_landingValue('hero_title', 'Kelola Pertanian')} '),
+                      TextSpan(text: '${_landingValue('hero_title', 'Kelola Pencatatan Pertanian')} '),
                       WidgetSpan(
                         alignment: PlaceholderAlignment.middle,
                         child: Column(

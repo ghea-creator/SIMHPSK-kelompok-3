@@ -432,19 +432,9 @@ class _AreaPainter extends CustomPainter {
     if (pts.isEmpty) return;
     if (moveTo) path.moveTo(pts[0].dx, pts[0].dy);
 
-    for (int i = 0; i < pts.length - 1; i++) {
-      final p0 = i > 0 ? pts[i - 1] : pts[i];
-      final p1 = pts[i];
-      final p2 = pts[i + 1];
-      final p3 = i + 2 < pts.length ? pts[i + 2] : p2;
-
-      // Catmull-Rom to bezier
-      final cp1x = p1.dx + (p2.dx - p0.dx) / 6;
-      final cp1y = p1.dy + (p2.dy - p0.dy) / 6;
-      final cp2x = p2.dx - (p3.dx - p1.dx) / 6;
-      final cp2y = p2.dy - (p3.dy - p1.dy) / 6;
-
-      path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.dx, p2.dy);
+    for (int i = 0; i < pts.length; i++) {
+      if (i == 0 && !moveTo) continue;
+      path.lineTo(pts[i].dx, pts[i].dy);
     }
   }
 
@@ -464,20 +454,6 @@ class _AreaPainter extends CustomPainter {
       final isHov = hoveredIndex == i;
       dot(harvestPts[i], const Color(0xFF2D6A4F), large: isHov);
       dot(salesPts[i],   const Color(0xFFE07C00), large: isHov);
-    }
-  }
-
-  void _drawHoverLine(Canvas canvas, Size size, double chartH, double chartW, int count, int idx) {
-    final x = leftPad + (count > 1 ? idx / (count - 1) : 0.5) * chartW;
-    final paint = Paint()
-      ..color = const Color(0xFFCCCCCC)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    // Dashed vertical line
-    double y = topPad;
-    while (y < size.height - botPad) {
-      canvas.drawLine(Offset(x, y), Offset(x, math.min(y + 4, size.height - botPad)), paint);
-      y += 8;
     }
   }
 
@@ -663,8 +639,8 @@ class _BarPainter extends CustomPainter {
     final yMax    = roundMax(rawMax);
 
     final slotW = chartW / count;
-    final barW  = slotW * 0.34;
-    final gap   = barW * 0.45;
+    final barW = math.min(slotW * 0.34, 28.0);
+    final gap = barW * 0.5;
 
     final gridP = Paint()..color = const Color(0xFFDDE5E0)..strokeWidth = 1;
     final tp = TextPainter(textDirection: ui.TextDirection.ltr);
@@ -696,8 +672,9 @@ class _BarPainter extends CustomPainter {
   }
 
   void drawBar(Canvas canvas, Offset origin, double w, double h, Color dark, Color light) {
+    final barHeight = h < 4 ? 4.0 : h;
     final rect = RRect.fromRectAndCorners(
-      Rect.fromLTWH(origin.dx, origin.dy, w, h),
+      Rect.fromLTWH(origin.dx, origin.dy - (barHeight - h), w, barHeight),
       topLeft: const Radius.circular(5), topRight: const Radius.circular(5),
     );
     final paint = Paint()

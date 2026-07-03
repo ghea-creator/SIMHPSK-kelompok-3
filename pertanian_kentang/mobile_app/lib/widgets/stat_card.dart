@@ -128,7 +128,12 @@ class _StatCardState extends State<StatCard> with SingleTickerProviderStateMixin
             // Sub label
             if (widget.subLabel != null) ...[
               const SizedBox(height: 4),
-              Text(widget.subLabel!, style: AppTheme.bodySmall),
+              Text(
+                widget.subLabel!,
+                style: AppTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
 
             // Progress bar

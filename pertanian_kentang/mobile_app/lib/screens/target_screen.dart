@@ -118,6 +118,7 @@ class _TargetScreenState extends State<TargetScreen> {
                 );
                 return;
               }
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
               setState(() => _isLoading = true);
               try {
@@ -132,11 +133,10 @@ class _TargetScreenState extends State<TargetScreen> {
                 );
                 if (res['success'] == true) {
                   _loadData();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Target panen berhasil diperbarui'), backgroundColor: Colors.green),
-                    );
-                  }
+                  if (!mounted) return;
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Target panen berhasil diperbarui'), backgroundColor: Colors.green),
+                  );
                 } else {
                   _loadData();
                 }

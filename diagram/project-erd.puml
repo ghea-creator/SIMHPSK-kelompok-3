@@ -1,0 +1,148 @@
+@startuml
+hide circle
+skinparam entity {
+  BackgroundColor LightGoldenRodYellow
+  BorderColor DarkOliveGreen
+  ArrowColor DarkSlateGray
+  FontSize 12
+}
+
+entity "users" as users {
+  * id : bigint <<PK>>
+  --
+  name : varchar
+  email : varchar
+  email_verified_at : timestamp
+  password : varchar
+  remember_token : varchar
+  phone : varchar
+  farm_name : varchar
+  role : enum
+  status : enum
+  approval : enum
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "seasons" as seasons {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  name : varchar
+  start_date : date
+  end_date : date
+  status : enum
+  target_kg : decimal
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "harvests" as harvests {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  season_id : bigint <<FK>>
+  quantity : int
+  date : date
+  weight_kg : decimal
+  notes : text
+  photo : varchar
+  status : enum
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "sales" as sales {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  season_id : bigint <<FK>>
+  date : date
+  buyer_name : varchar
+  buyer_phone : varchar
+  weight_kg : decimal
+  price_per_kg : decimal
+  total : decimal
+  payment_status : enum
+  notes : text
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "production_costs" as production_costs {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  season_id : bigint <<FK>>
+  date : date
+  category : enum
+  amount : decimal
+  notes : text
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "stock_transactions" as stock_transactions {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  type : enum
+  amount : decimal
+  notes : text
+  reference : varchar
+  balance_after : decimal
+  date : datetime
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "notifications" as notifications {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  type : varchar
+  title : varchar
+  message : text
+  is_read : boolean
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "feedback" as feedback {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  message : text
+  status : varchar
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "settings" as settings {
+  * id : bigint <<PK>>
+  --
+  key : varchar
+  value : longtext
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+users ||--o{ seasons : "has many"
+users ||--o{ harvests : "has many"
+users ||--o{ sales : "has many"
+users ||--o{ production_costs : "has many"
+users ||--o{ stock_transactions : "has many"
+users ||--o{ notifications : "has many"
+users ||--o{ feedback : "has many"
+
+seasons ||--o{ harvests : "has many"
+seasons ||--o{ production_costs : "has many"
+seasons ||--o{ sales : "has many"
+
+@enduml

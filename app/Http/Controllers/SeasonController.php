@@ -32,6 +32,7 @@ class SeasonController extends Controller
     {
         $perPage = $request->input('per_page', 15);
         $seasons = Season::where('user_id', $request->user()->id)
+            ->withSum('harvests', 'weight_kg')
             ->latest()
             ->paginate($perPage);
 
@@ -74,6 +75,7 @@ class SeasonController extends Controller
                 'end_date' => $season->end_date,
                 'status' => $season->status,
                 'target_kg' => $season->target_kg,
+                'total_harvest_kg' => (int)$season->harvests()->sum('weight_kg'),
                 'created_at' => $season->created_at,
             ], 'Musim tanam berhasil ditambahkan.', 201);
         } catch (ValidationException $e) {
@@ -121,6 +123,7 @@ class SeasonController extends Controller
                 'end_date' => $season->end_date,
                 'status' => $season->status,
                 'target_kg' => $season->target_kg,
+                'total_harvest_kg' => (int)$season->harvests()->sum('weight_kg'),
                 'updated_at' => $season->updated_at,
             ], 'Musim tanam berhasil diperbarui.', 200);
         } catch (ValidationException $e) {
@@ -130,8 +133,7 @@ class SeasonController extends Controller
 
     /**
      * Delete season - API
-     */
-    public function destroy(Request $request, Season $season)
+     */    public function destroy(Request $request, Season $season)
     {
         if ($request->wantsJson()) {
             return $this->destroyApi($request, $season);

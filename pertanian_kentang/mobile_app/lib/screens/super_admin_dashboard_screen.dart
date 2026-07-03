@@ -88,7 +88,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                         mainAxisSpacing: 16,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        childAspectRatio: isDesktop ? 2.8 : 1.9,
+                        childAspectRatio: isDesktop ? 2.0 : 1.9,
                         children: [
                           StatCard(
                             icon: Icons.people_outline,
