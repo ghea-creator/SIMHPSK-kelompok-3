@@ -30,7 +30,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadUsers();
   }
 
@@ -339,7 +339,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
 
   List<dynamic> _getFilteredUsers(int index) {
     if (index == 0) return _users;
-    return _users.where((u) => u['status'] == 'active').toList();
+    if (index == 1) return _users.where((u) => u['status'] == 'active').toList();
+    return _users.where((u) => u['status'] == 'inactive').toList();
   }
 
   @override
@@ -358,7 +359,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           appBar: isDesktop
               ? null
               : AppMobileAppBar(
-                  title: 'Kelola Akun Tani',
+                  title: 'Kelola Pencatatan Panen Kentang Lebih Cerdas',
                   userInitials: initials,
                   onNotificationTap: _loadUsers,
                 ),
@@ -386,7 +387,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   children: [
                     if (isDesktop)
                       AppHeader(
-                        title: 'Kelola Akun Tani',
+                        title: 'Kelola Pencatatan Panen Kentang Lebih Cerdas',
                         subtitle: 'Kelola akun petani dan impersonasi',
                         userInitials: initials,
                         onRefresh: _loadUsers,
@@ -401,6 +402,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         tabs: const [
                           Tab(text: 'Semua'),
                           Tab(text: 'Aktif'),
+                          Tab(text: 'Non-aktif'),
                         ],
                       ),
                     ),
@@ -413,7 +415,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                             )
                           : TabBarView(
                               controller: _tabController,
-                              children: List.generate(2, (index) {
+                              children: List.generate(3, (index) {
                                 final filteredList = _getFilteredUsers(index);
                                 if (filteredList.isEmpty) {
                                   return Center(

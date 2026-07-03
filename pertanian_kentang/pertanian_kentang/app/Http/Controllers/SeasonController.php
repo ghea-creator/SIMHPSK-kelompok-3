@@ -32,6 +32,7 @@ class SeasonController extends Controller
     {
         $perPage = $request->input('per_page', 15);
         $seasons = Season::where('user_id', $request->user()->id)
+            ->withSum('harvests as total_harvest_kg', 'weight_kg')
             ->latest()
             ->paginate($perPage);
 

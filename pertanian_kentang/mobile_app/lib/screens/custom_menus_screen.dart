@@ -77,10 +77,9 @@ class _CustomMenusScreenState extends State<CustomMenusScreen> {
     final isEdit = menu != null;
     final titleController = TextEditingController(text: menu?['title'] ?? '');
     final iconController = TextEditingController(text: menu?['icon'] ?? 'agriculture');
-    final colorController = TextEditingController(text: menu?['color'] ?? '#27AE60');
     final descController = TextEditingController(text: menu?['description'] ?? '');
-    final urlController = TextEditingController(text: menu?['url'] ?? '');
     final orderController = TextEditingController(text: (menu?['sort_order'] ?? 1).toString());
+    final menuColor = menu?['color'] ?? '#27AE60';
     
     bool isActive = menu?['is_active'] == 1 || menu?['is_active'] == true;
     final formKey = GlobalKey<FormState>();
@@ -123,22 +122,6 @@ class _CustomMenusScreenState extends State<CustomMenusScreen> {
                   ),
                   validator: (val) => val == null || val.trim().isEmpty ? 'Nama icon wajib diisi' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: colorController,
-                  decoration: const InputDecoration(
-                    labelText: 'Warna Hex (HEX Code)',
-                    hintText: 'Contoh: #27AE60, #FF5733',
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Warna wajib diisi';
-                    if (!RegExp(r'^#[A-Fa-f0-9]{6}$').hasMatch(val.trim())) {
-                      return 'Masukkan kode hex warna valid (contoh: #27AE60)';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
                 TextFormField(
                   controller: descController,
                   decoration: const InputDecoration(
@@ -146,14 +129,6 @@ class _CustomMenusScreenState extends State<CustomMenusScreen> {
                     hintText: 'Contoh: Untuk mencatat log pembelian pupuk',
                   ),
                   validator: (val) => val == null || val.trim().isEmpty ? 'Keterangan wajib diisi' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: urlController,
-                  decoration: const InputDecoration(
-                    labelText: 'Target URL / Route (Opsional)',
-                    hintText: 'Contoh: /costs?category=fertilizer',
-                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -190,9 +165,8 @@ class _CustomMenusScreenState extends State<CustomMenusScreen> {
                       final dataMap = {
                         'title': titleController.text.trim(),
                         'icon': iconController.text.trim(),
-                        'color': colorController.text.trim(),
+                        'color': menuColor,
                         'description': descController.text.trim(),
-                        'url': urlController.text.trim().isEmpty ? null : urlController.text.trim(),
                         'sort_order': int.parse(orderController.text),
                       };
                       if (isEdit) {

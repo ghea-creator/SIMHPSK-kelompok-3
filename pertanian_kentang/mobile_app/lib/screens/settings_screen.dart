@@ -7,15 +7,6 @@ import '../widgets/app_sidebar.dart';
 import '../widgets/app_theme.dart';
 import '../login_screen.dart';
 import '../utils/navigation_helper.dart';
-import 'costs_screen.dart';
-import 'harvest_screen.dart';
-import 'home_screen.dart';
-import 'profile_screen.dart';
-import 'reports_screen.dart';
-import 'sales_screen.dart';
-import 'season_screen.dart';
-import 'settings_screen.dart';
-import 'stock_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -57,7 +48,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _maxStockController = TextEditingController();
 
   // Notifications toggles
-  bool _notifyLowStock = true;
   bool _notifyNewSale = true;
   bool _notifyCost = true;
 
@@ -89,13 +79,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  
   Future<void> _deleteAccount() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Hapus Akun'),
-        content: const Text('Apakah Anda yakin ingin menghapus akun ini secara permanen? Semua data Anda akan terhapus.'),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus akun ini secara permanen? Semua data Anda akan terhapus.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -140,7 +131,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _minStockController.text = (data['min_stock'] ?? 100).toString();
         _maxStockController.text = (data['max_stock'] ?? 5000).toString();
 
-        _notifyLowStock = data['notify_low_stock'] as bool? ?? true;
         _notifyNewSale = data['notify_new_sale'] as bool? ?? true;
         _notifyCost = data['notify_cost'] as bool? ?? true;
       }
@@ -222,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isSavingNotif = true);
 
     final result = await _apiService.updateNotifications(
-      notifyLowStock: _notifyLowStock,
+      notifyLowStock: false,
       notifyNewSale: _notifyNewSale,
       notifyCost: _notifyCost,
     );
@@ -304,7 +294,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
                   navItems: NavigationHelper.buildNavItems(context, 'settings'),
-                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'settings'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(
+                    context,
+                    'settings',
+                  ),
                 ),
           body: Row(
             children: [
@@ -315,7 +308,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userInitials: initials,
                   onLogout: () => _showLogoutDialog(context),
                   navItems: NavigationHelper.buildNavItems(context, 'settings'),
-                  secondaryItems: NavigationHelper.buildSecondaryNavItems(context, 'settings'),
+                  secondaryItems: NavigationHelper.buildSecondaryNavItems(
+                    context,
+                    'settings',
+                  ),
                 ),
               Expanded(
                 child: Column(
@@ -329,7 +325,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     Expanded(
                       child: _isLoading
-                          ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.green700,
+                              ),
+                            )
                           : SingleChildScrollView(
                               padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
                               child: Center(
@@ -339,7 +339,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   child: isDesktop
                                       ? Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
                                               child: Column(
@@ -392,57 +393,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  List<SidebarNavItem> _buildNavItems(BuildContext context) {
-    return [
-      SidebarNavItem(
-        icon: Icons.grid_view_rounded,
-        label: 'Dashboard',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.calendar_month_outlined,
-        label: 'Musim Tanam',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SeasonScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.agriculture_outlined,
-        label: 'Pencatatan Panen',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HarvestScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.inventory_2_outlined,
-        label: 'Stok Gudang',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => StockScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.shopping_cart_outlined,
-        label: 'Penjualan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SalesScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.attach_money_rounded,
-        label: 'Biaya Produksi',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CostsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.bar_chart_rounded,
-        label: 'Laporan',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ReportsScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.person,
-        label: 'Profil',
-        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-      ),
-      SidebarNavItem(
-        icon: Icons.settings,
-        label: 'Pengaturan',
-        isActive: true,
-        onTap: () {},
-      ),
-    ];
-  }
-
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -450,7 +400,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Logout'),
         content: const Text('Apakah Anda yakin ingin keluar dari panel admin?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           TextButton(
             onPressed: () async {
               final navigator = Navigator.of(context);
@@ -567,7 +520,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : const Text('Hapus Akun Permanen'),
                 ),
               ),
-
             ],
           ),
         ),
@@ -778,20 +730,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Colors.purple,
             ),
             const Divider(height: 24),
-            SwitchListTile(
-              title: const Text(
-                'Batas Stok Rendah',
-                style: TextStyle(fontSize: 14),
-              ),
-              subtitle: const Text(
-                'Notifikasi jika persediaan di gudang mendekati minimal',
-                style: TextStyle(fontSize: 11),
-              ),
-              value: _notifyLowStock,
-              activeThumbColor: Colors.purple,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (val) => setState(() => _notifyLowStock = val),
-            ),
             SwitchListTile(
               title: const Text(
                 'Penjualan Baru',

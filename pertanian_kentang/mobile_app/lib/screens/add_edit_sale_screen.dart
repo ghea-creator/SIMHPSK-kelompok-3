@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 // intl removed: date input is text-only YYYY-MM-DD
 import '../services/api_service.dart';
 import '../models/sale.dart';
-import '../models/season.dart';
 import '../utils/thousands_formatter.dart';
 import '../widgets/app_theme.dart';
 
@@ -31,10 +30,6 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
   int? _totalPrice;
   late String _paymentStatus;
 
-  List<Season> _seasons = [];
-  Season? _selectedSeason;
-  bool _isLoadingSeasons = false;
-
   @override
   void initState() {
     super.initState();
@@ -59,45 +54,6 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
     _paymentStatus = widget.sale?.status == 'pending' ? 'unpaid' : 'paid';
 
     _updateTotal();
-    _loadSeasons();
-  }
-
-  Future<void> _loadSeasons() async {
-    setState(() {
-      _isLoadingSeasons = true;
-    });
-
-    try {
-      final seasons = await _apiService.getSeasons();
-      if (mounted) {
-        setState(() {
-          _seasons = seasons;
-          if (widget.sale != null && widget.sale!.seasonId != null) {
-            _selectedSeason = _seasons.firstWhere(
-              (s) => s.id == widget.sale!.seasonId,
-              orElse: () => _seasons.isNotEmpty
-                  ? _seasons.first
-                  : Season(
-                      id: 0,
-                      name: 'N/A',
-                      startDate: '',
-                      endDate: '',
-                      status: 'active',
-                    ),
-            );
-          } else if (_seasons.isNotEmpty) {
-            _selectedSeason = _seasons.first;
-          }
-          _isLoadingSeasons = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingSeasons = false;
-        });
-      }
-    }
   }
 
   void _updateTotal() {
@@ -204,7 +160,6 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
           notes: _notesController.text.isEmpty ? null : _notesController.text,
           status: 'completed',
           paymentStatus: _paymentStatus,
-          seasonId: _selectedSeason?.id,
         );
       } else {
         // Edit existing
@@ -222,7 +177,6 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
           notes: _notesController.text.isEmpty ? null : _notesController.text,
           status: 'completed',
           paymentStatus: _paymentStatus,
-          seasonId: _selectedSeason?.id,
         );
       }
 
@@ -330,79 +284,6 @@ class _AddEditSaleScreenState extends State<AddEditSaleScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Season Dropdown
-                    const Text(
-                      'Musim Tanam (Opsional)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Color(0xFF1A3428),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _isLoadingSeasons
-                        ? const Center(child: CircularProgressIndicator())
-                        : DropdownButtonFormField<Season?>(
-                            initialValue: _selectedSeason,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                            ),
-                            items: [
-                              const DropdownMenuItem<Season?>(
-                                value: null,
-                                child: Text('Semua Musim / Tanpa Musim'),
-                              ),
-                              ..._seasons.map((Season season) {
-                                return DropdownMenuItem<Season?>(
-                                  value: season,
-                                  child: Text(season.name),
-                                );
-                              }),
-                            ],
-                            onChanged: (Season? newValue) {
-                              setState(() {
-                                _selectedSeason = newValue;
-
-                                if (newValue != null &&
-                                    _dateController.text.isNotEmpty) {
-                                  final currentDate = DateTime.tryParse(
-                                    _dateController.text,
-                                  );
-                                  final seasonStart = DateTime.tryParse(
-                                    newValue.startDate,
-                                  );
-                                  final seasonEnd = DateTime.tryParse(
-                                    newValue.endDate,
-                                  );
-
-                                  if (currentDate != null &&
-                                      seasonStart != null &&
-                                      seasonEnd != null) {
-                                    if (currentDate.isBefore(seasonStart) ||
-                                        currentDate.isAfter(seasonEnd)) {
-                                      _dateController.text = '';
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Tanggal direset karena di luar musim tanam terpilih.',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                }
-                              });
-                            },
-                          ),
-                    const SizedBox(height: 20),
 
                     // Date
                     const Text(

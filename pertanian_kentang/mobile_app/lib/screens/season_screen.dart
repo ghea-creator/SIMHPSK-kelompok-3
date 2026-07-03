@@ -937,12 +937,21 @@ class _SeasonFormBottomSheetState extends State<_SeasonFormBottomSheet> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: _nameController,
+                  DropdownButtonFormField<String>(
+                    initialValue: _nameController.text.isNotEmpty ? _nameController.text : 'Hujan',
                     decoration: _inputDecoration(
                       label: 'Nama Musim Tanam',
                       prefixIcon: const Icon(Icons.calendar_month),
                     ),
+                    items: const [
+                      DropdownMenuItem(value: 'Hujan', child: Text('Hujan')),
+                      DropdownMenuItem(value: 'Kemarau', child: Text('Kemarau')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _nameController.text = value);
+                      }
+                    },
                   ),
                   const SizedBox(height: 12),
                   TextField(

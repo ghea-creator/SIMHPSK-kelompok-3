@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import '../widgets/app_theme.dart';
-import 'reports_screen.dart';
+import '../models/monthly_data.dart';
 
 class MonthlyTrendTooltip extends StatelessWidget {
   final MonthlyData data;

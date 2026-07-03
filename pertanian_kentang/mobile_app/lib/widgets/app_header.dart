@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'app_theme.dart';
@@ -611,16 +612,18 @@ class _AppMobileAppBarState extends State<AppMobileAppBar> {
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.black12,
-      leading: Builder(
-        builder: (ctx) => IconButton(
-          icon: const Icon(
-            Icons.menu_rounded,
-            color: AppTheme.textPrimary,
-            size: 22,
-          ),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
-        ),
-      ),
+      leading: kIsWeb
+          ? Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(
+                  Icons.menu_rounded,
+                  color: AppTheme.textPrimary,
+                  size: 22,
+                ),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            )
+          : null,
       title: Text(widget.title, style: AppTheme.h3),
       actions: [
         if (unread > 0)

@@ -379,7 +379,30 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   }
 
   Widget _buildProfitLossTab() {
-    if (!_isPLReady) return const SizedBox.shrink();
+    if (!_isPLReady) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.bar_chart_outlined, size: 60, color: AppTheme.textSecondary),
+              const SizedBox(height: 16),
+              const Text(
+                'Laporan belum tersedia saat ini.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadReportData,
+                child: const Text('Muat Ulang'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final costRatio = _totalRevenue > 0 ? (_totalCost / _totalRevenue) : 0.0;
     final profitRatio = _totalRevenue > 0 ? (_profit / _totalRevenue) : 0.0;
@@ -670,7 +693,30 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   }
 
   Widget _buildTargetVsActualTab() {
-    if (!_isTvAReady) return const SizedBox.shrink();
+    if (!_isTvAReady) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.timeline_outlined, size: 60, color: AppTheme.textSecondary),
+              const SizedBox(height: 16),
+              const Text(
+                'Data target dan realisasi belum siap.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadReportData,
+                child: const Text('Coba lagi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: _loadReportData,

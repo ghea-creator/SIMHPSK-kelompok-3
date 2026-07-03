@@ -1,332 +1,230 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import '../providers/auth_provider.dart';
-import '../services/api_service.dart';
-import '../models/dashboard.dart';
-import '../login_screen.dart';
-import '../widgets/app_theme.dart';
-import '../widgets/app_sidebar.dart';
-import '../widgets/app_header.dart';
-import '../widgets/stat_card.dart';
-import '../widgets/dashboard_widgets.dart';
-import '../widgets/harvest_chart.dart';
-import 'harvest_screen.dart';
-import 'stock_screen.dart';
-import 'sales_screen.dart';
-import 'profile_screen.dart';
-import 'costs_screen.dart';
-import 'reports_screen.dart';
-import 'settings_screen.dart';
-import 'feedback_screen.dart';
-import 'season_screen.dart';
-import 'super_admin_dashboard_screen.dart';
-import 'chatbot_screen.dart';
-import '../utils/navigation_helper.dart';
-
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  // ─── Business Logic (unchanged) ──────────────────────────────────────────────
-  late ApiService _apiService;
-  DashboardData? _dashboardData;
-  bool _isLoading = true;
-  String? _errorMessage;
-  // Mobile bottom-nav index
-  int _mobileNavIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _apiService = ApiService();
-    _loadDashboard();
-  }
-
-  Future<void> _loadDashboard() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final data = await _apiService.getDashboard();
-      if (mounted) {
-        setState(() {
-          _dashboardData = data;
-          _isLoading = false;
-        });
-
-        if (_dashboardData != null) {
-          // No minimum stock notification on mobile dashboard.
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.toString();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal memuat dashboard: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Color _parseHexColor(String hexStr) {
-    try {
-      return Color(int.parse('FF${hexStr.replaceAll('#', '')}', radix: 16));
-    } catch (_) {
-      return const Color(0xFF27AE60);
-    }
-  }
-
-  IconData _parseIcon(String iconName) {
-    const map = {
-      'spa': Icons.spa,
-      'agriculture': Icons.agriculture,
-      'inventory': Icons.inventory,
-      'shopping_cart': Icons.shopping_cart,
-      'person': Icons.person,
-      'category': Icons.category,
-      'monetization_on': Icons.monetization_on,
-      'settings': Icons.settings,
-      'help': Icons.help,
-    };
-    return map[iconName] ?? Icons.widgets;
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
               final nav = Navigator.of(context);
               final auth = context.read<AuthProvider>();
               nav.pop();
               await auth.logout();
               nav.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-              );
-            },
-            child: const Text('Keluar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
+                import 'package:provider/provider.dart';
+                import 'package:intl/intl.dart';
+                import '../providers/auth_provider.dart';
+                import '../services/api_service.dart';
+                import '../models/dashboard.dart';
+                import '../login_screen.dart';
+                import '../widgets/app_theme.dart';
+                import '../widgets/app_sidebar.dart';
+                import '../widgets/app_header.dart';
+                import '../widgets/stat_card.dart';
+                import '../widgets/dashboard_widgets.dart';
+                import '../widgets/harvest_chart.dart';
+                import 'harvest_screen.dart';
+                import 'stock_screen.dart';
+                import 'sales_screen.dart';
+                import 'profile_screen.dart';
+                import 'costs_screen.dart';
+                import 'reports_screen.dart';
+                import 'settings_screen.dart';
+                import 'feedback_screen.dart';
+                import 'season_screen.dart';
+                import 'super_admin_dashboard_screen.dart';
+                import 'chatbot_screen.dart';
 
-  // ─── Routing ─────────────────────────────────────────────────────────────────
-  void _navTo(Widget screen) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => screen),
-      ).then((_) => _loadDashboard());
+                class HomeScreen extends StatefulWidget {
+                  const HomeScreen({super.key});
 
-  void _onMobileNavTap(int index) {
-    setState(() => _mobileNavIndex = index);
-    switch (index) {
-      case 1:
-        _navTo(const HarvestScreen());
-        break;
-      case 2:
-        _navTo(const StockScreen());
-        break;
-      case 3:
-        _navTo(const SalesScreen());
-        break;
-      case 4:
-        _navTo(const ReportsScreen());
-        break;
-      case 5:
-        _showMobileMore();
-        break;
-    }
-  }
+                  @override
+                  State<HomeScreen> createState() => _HomeScreenState();
+                }
 
-  // ─── Build ────────────────────────────────────────────────────────────────────
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 900;
-        if (isDesktop) {
-          return _buildDesktop(context);
-        }
-        return _buildMobile(context);
-      },
-    );
-  }
+                class _HomeScreenState extends State<HomeScreen> {
+                  // ─── Business Logic (unchanged) ──────────────────────────────────────────────
+                  late ApiService _apiService;
+                  DashboardData? _dashboardData;
+                  List<dynamic> _customMenus = [];
+                  bool _isLoading = true;
+                  String? _errorMessage;
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // DESKTOP
-  // ═══════════════════════════════════════════════════════════════════════════════
+                  // Mobile bottom-nav index
+                  int _mobileNavIndex = 0;
 
-  Widget _buildDesktop(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final name = auth.user?.name ?? 'User';
-    final email = auth.user?.email ?? '';
-    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    final now = DateTime.now();
-    final dateStr = DateFormat('d MMM yyyy', 'id').format(now);
+                  @override
+                  void initState() {
+                    super.initState();
+                    _apiService = ApiService();
+                    _loadDashboard();
+                  }
 
-    return Scaffold(
-      backgroundColor: AppTheme.pageBg,
-      body: Row(
-        children: [
-          // ── Sidebar ───────────────────────────────────────────────────────
-          AppSidebar(
-            userName: name,
-            userEmail: email,
-            userInitials: initials,
-            onLogout: () => _showLogoutDialog(context),
-            navItems: _buildNavItems(context, isActive: 'dashboard'),
-            secondaryItems: _buildSecondaryNavItems(context),
-          ),
+                  Future<void> _loadDashboard() async {
+                    setState(() { _isLoading = true; _errorMessage = null; });
+                    try {
+                      final data  = await _api_service.getDashboard();
+                      final menus = await _api_service.getDashboardMenus();
+                      if (mounted) {
+                        setState(() {
+                          _dashboardData = data;
+                          _customMenus = menus.where((m) => m['is_active'] == 1 || m['is_active'] == true).toList();
+                          _isLoading = false;
+                        });
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        setState(() { _isLoading = false; _errorMessage = e.toString(); });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Gagal memuat dashboard: $e'), backgroundColor: Colors.red),
+                        );
+                      }
+                    }
+                  }
 
-          // ── Main ──────────────────────────────────────────────────────────
-          Expanded(
-            child: Column(
-              children: [
-                AppHeader(
-                  title: 'Dashboard',
-                  subtitle: 'Musim 1 · $dateStr',
-                  userInitials: initials,
-                  onRefresh: _loadDashboard,
-                ),
-                if (auth.isImpersonating) _buildImpersonationBar(auth),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: AppTheme.green700,
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadDashboard,
-                          color: AppTheme.green700,
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.all(AppTheme.pageHPad),
-                            child: _buildContent(context, isDesktop: true),
-                          ),
+                  Color _parseHexColor(String hexStr) {
+                    try {
+                      return Color(int.parse('FF${hexStr.replaceAll('#', '')}', radix: 16));
+                    } catch (_) { return const Color(0xFF27AE60); }
+                  }
+
+                  IconData _parseIcon(String iconName) {
+                    const map = {
+                      'spa': Icons.spa, 'agriculture': Icons.agriculture, 'inventory': Icons.inventory,
+                      'shopping_cart': Icons.shopping_cart, 'person': Icons.person, 'category': Icons.category,
+                      'monetization_on': Icons.monetization_on, 'settings': Icons.settings, 'help': Icons.help,
+                    };
+                    return map[iconName] ?? Icons.widgets;
+                  }
+
+                  void _handleCustomMenuTap(BuildContext context, Map<String, dynamic> menu) {
+                    final url = (menu['url'] ?? '').toString().toLowerCase().trim();
+                    void push(Widget s) => Navigator.push(context, MaterialPageRoute(builder: (_) => s)).then((_) => _loadDashboard());
+                    if (url.contains('cost') || url.contains('biaya')) {
+                      push(const CostsScreen());
+                    } else if (url.contains('report') || url.contains('laporan') || url.contains('analis')) {
+                      push(const ReportsScreen());
+                    } else if (url.contains('setting') || url.contains('pengaturan')) {
+                      push(const SettingsScreen());
+                    } else if (url.contains('harvest') || url.contains('panen')) {
+                      push(const HarvestScreen());
+                    } else if (url.contains('stock') || url.contains('stok') || url.contains('gudang')) {
+                      push(const StockScreen());
+                    } else if (url.contains('sale') || url.contains('jual')) {
+                      push(const SalesScreen());
+                    } else if (url.contains('season') || url.contains('musim')) {
+                      push(const SeasonScreen());
+                    } else if (url.contains('feedback') || url.contains('ulasan')) {
+                      push(const FeedbackScreen());
+                    } else if (url.contains('bot') || url.contains('chat')) {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatbotScreen()));
+                    } else {
+                      showDialog(context: context, builder: (_) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: Text(menu['title'] ?? '', style: const TextStyle(color: AppTheme.green700, fontWeight: FontWeight.bold)),
+                        content: Text(menu['description'] ?? '', style: const TextStyle(fontSize: 14)),
+                        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
+                      ));
+                    }
+                  }
+
+                  void _showLogoutDialog(BuildContext context) {
+                    showDialog(context: context, builder: (_) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text('Keluar'),
+                      content: const Text('Apakah Anda yakin ingin keluar?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+                        TextButton(
+                          onPressed: () async {
+                            final nav  = Navigator.of(context);
+                            final auth = context.read<AuthProvider>();
+                            nav.pop();
+                            await auth.logout();
+                            nav.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+                          },
+                          child: const Text('Keluar', style: TextStyle(color: Colors.red)),
                         ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                      ],
+                    ));
+                  }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // MOBILE
-  // ═══════════════════════════════════════════════════════════════════════════════
+                  // ─── Routing ─────────────────────────────────────────────────────────────────
+                  void _navTo(Widget screen) =>
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => screen)).then((_) => _loadDashboard());
 
-  Widget _buildMobile(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final name = auth.user?.name ?? 'User';
-    final email = auth.user?.email ?? '';
-    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+                  void _onMobileNavTap(int index) {
+                    setState(() => _mobileNavIndex = index);
+                    switch (index) {
+                      case 1: _navTo(const HarvestScreen()); break;
+                      case 2: _navTo(const StockScreen()); break;
+                      case 3: _navTo(const SalesScreen()); break;
+                      case 4: _navTo(const ReportsScreen()); break;
+                      case 5: _showMobileMore(); break;
+                    }
+                  }
 
-    return Scaffold(
-      backgroundColor: AppTheme.pageBg,
-      appBar: AppMobileAppBar(title: 'Dashboard', userInitials: initials),
-      body: Column(
-        children: [
-          if (auth.isImpersonating) _buildImpersonationBar(auth),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.green700),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _loadDashboard,
-                    color: AppTheme.green700,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
-                      child: _buildContent(context, isDesktop: false),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
+                  // ─── Build ────────────────────────────────────────────────────────────────────
+                  @override
+                  Widget build(BuildContext context) {
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isDesktop = constraints.maxWidth >= 900;
+                        if (isDesktop) { return _buildDesktop(context); }
+                        return _buildMobile(context);
+                      },
+                    );
+                  }
 
-  // ─── Nav Items ─────────────────────────────────────────────────────────────
+                  // ═══════════════════════════════════════════════════════════════════════════════
+                  // DESKTOP
+                  // ═══════════════════════════════════════════════════════════════════════════════
 
-  List<SidebarNavItem> _buildNavItems(
-    BuildContext context, {
-    required String isActive,
-  }) {
-    return NavigationHelper.buildNavItems(context, isActive);
-  }
+                  Widget _buildDesktop(BuildContext context) {
+                    final auth = context.watch<AuthProvider>();
+                    final name     = auth.user?.name ?? 'User';
+                    final email    = auth.user?.email ?? '';
+                    final initials = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+                    final now = DateTime.now();
+                    final dateStr = DateFormat('d MMM yyyy', 'id').format(now);
 
-  List<SidebarNavItem> _buildSecondaryNavItems(BuildContext context) {
-    return NavigationHelper.buildSecondaryNavItems(context, 'dashboard');
-  }
+                    return Scaffold(
+                      backgroundColor: AppTheme.pageBg,
+                      body: Row(
+                        children: [
+                          // ── Sidebar ───────────────────────────────────────────────────────
+                          AppSidebar(
+                            userName: name,
+                            userEmail: email,
+                            userInitials: initials,
+                            onLogout: () => _showLogoutDialog(context),
+                            navItems: _buildNavItems(context, isActive: 'dashboard'),
+                            secondaryItems: _buildSecondaryNavItems(context),
+                          ),
 
-  // ─── Main content ────────────────────────────────────────────────────────────
-
-  Widget _buildContent(BuildContext context, {required bool isDesktop}) {
-    final auth = context.watch<AuthProvider>();
-    final name = auth.user?.name ?? 'User';
-    final farmName = auth.user?.farmName;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Welcome Banner
-        WelcomeBanner(userName: name, farmName: farmName),
-
-        // Error
-        if (_errorMessage != null) ...[
-          const SizedBox(height: 16),
-          AlertBanner(
-            message: 'Gagal memuat data',
-            detail: _errorMessage,
-            icon: Icons.error_outline_rounded,
-            bgColor: AppTheme.red100,
-            borderColor: AppTheme.red600,
-            textColor: const Color(0xFF7F1D1D),
-            iconColor: AppTheme.red600,
-          ),
-        ],
-
-        if (_dashboardData != null) ...[
-          const SizedBox(height: 24),
-
-          // Stat cards
-          _buildStatCards(context, isDesktop: isDesktop),
-
-          const SizedBox(height: 24),
-
-          // Chart + Financial summary
-          if (isDesktop)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 8, child: _buildChartSection()),
+                          // ── Main ──────────────────────────────────────────────────────────
+                          Expanded(
+                            child: Column(
+                              children: [
+                                AppHeader(
+                                  title: 'Dashboard',
+                                  subtitle: 'Musim 1 · $dateStr',
+                                  userInitials: initials,
+                                  onRefresh: _loadDashboard,
+                                ),
+                                if (auth.isImpersonating) _buildImpersonationBar(auth),
+                                Expanded(
+                                  child: _isLoading
+                                      ? const Center(child: CircularProgressIndicator(color: AppTheme.green700))
+                                      : RefreshIndicator(
+                                          onRefresh: _loadDashboard,
+                                          color: AppTheme.green700,
+                                          child: SingleChildScrollView(
+                                            physics: const AlwaysScrollableScrollPhysics(),
+                                            padding: const EdgeInsets.all(AppTheme.pageHPad),
+                                            child: _buildContent(context, isDesktop: true),
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 const SizedBox(width: AppTheme.cardGap),
                 Expanded(flex: 4, child: _buildFinancialSummary()),
               ],
@@ -456,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ─── Financial Summary ───────────────────────────────────────────────────────────────
+  // ─── Financial Summary ────────────────────────────────────────────────────────
 
   Widget _buildFinancialSummary() {
     final revenue = _dashboardData!.totalPenjualan;
@@ -545,7 +443,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
   // ─── Transactions Section ─────────────────────────────────────────────────────
 
   Widget _buildTransactionsSection() {
@@ -608,6 +505,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
     );
   }
+  // ─── Custom Menus section moved inline where used (helper removed)
 
   // ─── Impersonation Bar ────────────────────────────────────────────────────────
 
@@ -807,9 +705,9 @@ class _HomeScreenState extends State<HomeScreen> {
         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
       trailing: const Icon(
-        Icons.arrow_forward_ios_rounded,
-        color: AppTheme.textSecondary,
+        Icons.arrow_forward_ios,
         size: 14,
+        color: AppTheme.textSecondary,
       ),
       onTap: () {
         Navigator.pop(context);
@@ -834,9 +732,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatNumber(int value) => value.toString().replaceAllMapped(
-        RegExp(r'\B(?=(\d{3})+(?!\d))'),
-        (m) => '.',
-      );
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (m) => '.',
+  );
 
   DateTime _safeDate(String? s) => s != null && s.isNotEmpty
       ? (DateTime.tryParse(s) ?? DateTime.now())
