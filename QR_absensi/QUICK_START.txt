@@ -1,0 +1,121 @@
+╔════════════════════════════════════════════════════════════╗
+║                 🚀 QUICK START GUIDE 🚀                     ║
+║            (Copy-Paste Friendly, No Confusion!)             ║
+╚════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 PREREQUIREMENT: Laragon harus sudah running
+   (Klik "Start All" di Laragon untuk nyalain MySQL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 OPSI 1: TERMUDAH (Gunakan Script)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Buka File Explorer
+2. Pergi ke: C:\laragon\www\backend-absensi\
+3. DOUBLE-CLICK file: START.bat
+4. Tunggu 10 detik sampai 2 terminal terbuka
+5. Buka Browser → http://localhost:5173/
+6. LOGIN: admin / 123456
+
+SELESAI! ✅
+
+
+🎯 OPSI 2: MANUAL (Jika Script tidak work)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TERMINAL 1 (JANGAN TUTUP):
+─────────────────────────
+1. Buka Command Prompt (Tekan: Win + R, ketik "cmd", Enter)
+2. Copy-paste perintah ini:
+   
+   cd c:\laragon\www\backend-absensi && node index.js
+
+3. Tunggu sampai muncul tulisan:
+   "Server jalan di http://localhost:5000 ✅"
+
+
+TERMINAL 2 (BUKA BARU):
+──────────────────────
+1. Buka Command Prompt BARU lagi (Tekan: Win + R, ketik "cmd", Enter)
+2. Copy-paste perintah ini:
+
+   cd c:\laragon\www\backend-absensi\frontend-absensi && npm run dev
+
+3. Tunggu sampai muncul tulisan:
+   "Local: http://localhost:5173/"
+
+
+BROWSER:
+────────
+1. Buka browser (Chrome/Firefox)
+2. Ketik: http://localhost:5173/
+3. LOGIN dengan:
+   Username: admin
+   Password: 123456
+
+SELESAI! ✅
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔴 MASALAH UMUM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "ECONNREFUSED port 3306"
+   → MySQL tidak running
+   → Solusi: Buka Laragon, klik "Start All"
+
+❌ "Cannot GET /"
+   → Akses localhost:5000 di browser (salah!)
+   → Solusi: Akses http://localhost:5173/ (yang benar)
+
+❌ "Port 5173 already in use"
+   → npm masih running dari sebelumnya
+   → Solusi: Buka Task Manager, kill npm, jalankan lagi
+
+❌ Login tidak berhasil / error di Chrome console
+   → Backend tidak running
+   → Solusi: Check Terminal 1, pastikan ada tulisan "Server jalan"
+
+❌ Frontend blank/loading terus
+   → Mungkin node_modules belum install
+   → Solusi: Di Terminal 2, Ctrl+C, kemudian:
+      npm install
+      npm run dev
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ CHECKLIST SEBELUM MEMULAI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☑ Laragon sudah terinstall
+☑ Laragon sudah running (Status: green "Running")
+☑ MySQL berjalan di port 3306 (check di Laragon: Database running?)
+☑ Command Prompt bisa diakses
+☑ Browser bisa koneksi internet (atau minimal localhost)
+☑ Node.js sudah terinstall (test: buka cmd, ketik "node -v")
+☑ npm sudah terinstall (test: buka cmd, ketik "npm -v")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 DAFTAR PORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3306  = MySQL Database (Laragon)
+5000  = Backend API (Node.js - Jangan buka di browser!)
+5173  = Frontend Website (React - Akses di browser!)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 TIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Jangan tutup 2 terminal saat menggunakan aplikasi
+• Browser bisa close kapan saja, Terminal harus tetap terbuka
+• Untuk stop aplikasi: Close 2 terminal atau Ctrl+C
+• Untuk refresh data: F5 di browser
+• Konsol developer: F12 di browser (untuk lihat error)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 Good to go! Semoga lancar! 🚀
