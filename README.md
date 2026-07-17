@@ -62,16 +62,14 @@ Sebelumnya, pencatatan semacam ini umumnya dilakukan manual (buku catatan atau s
 ---
 
 ## 3. Tampilan Aplikasi
-
-> Tempelkan screenshot aplikasi (mobile app & landing page) di bagian ini. Contoh format:
->
 > | Login | Dashboard | Catat Panen | Laporan |
-> |---|---|---|---|
-> | ![Login](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) | ![Panen](docs/screenshots/harvest.png) | ![Laporan](docs/screenshots/report.png) |
->
-> *(Buat folder `docs/screenshots/` di repo, upload gambar hasil screenshot aplikasi mobile & web, lalu ganti path di atas sesuai nama file kamu.)*
+><img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/315aceed-7a30-4735-9955-f72e1dd56a84" />
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/814b7f0e-046d-43a1-b494-8512d821d55e" />
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/4ae4a077-4e0f-4cc8-85a8-802122ebd3ad" />
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/24f46da2-a78a-483e-893c-4b3af41fd23f" />
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/d300de0b-6498-4110-a9ab-a564697027c6" />
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/ad97cb0e-8240-432c-a142-5faa3cd2d252" />
 
----
 
 ## 4. Cara Penggunaan
 
