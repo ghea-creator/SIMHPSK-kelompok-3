@@ -248,20 +248,7 @@ SIMHPSK-kelompok-3/
 
 Dokumentasi tambahan yang tersedia di root repo: `API_DOCUMENTATION.md`, `API_GUIDE.md`, `DEPLOYMENT_GUIDE.md`, `N8N_INTEGRATION_GUIDE.md`, `EXPORT_GUIDE.md`.
 
----
-
-## 8. Tim Pengembang
-
-**Kelompok 3**
-
-| Nama | NPM | Peran |
-|---|---|---|
-| _(isi)_ | _(isi)_ | _(isi)_ |
-| _(isi)_ | _(isi)_ | _(isi)_ |
-| _(isi)_ | _(isi)_ | _(isi)_ |
-
----
-
+-
 ## Lisensi
 
 Proyek ini dibuat untuk keperluan tugas akademik (UAS Rekayasa Sistem Informasi).
