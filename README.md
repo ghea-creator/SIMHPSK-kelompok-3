@@ -252,3 +252,8 @@ Dokumentasi tambahan yang tersedia di root repo: `API_DOCUMENTATION.md`, `API_GU
 ## Lisensi
 
 Proyek ini dibuat untuk keperluan tugas akademik (UAS Rekayasa Sistem Informasi).
+
+
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/c5530d42-6c79-4df6-8a31-002389fdc470" />
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/f2211bc4-3af1-40c7-ae9d-03e12a1668c7" />
+
